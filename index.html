@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JGS Advanced Code Project Builder</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/atom-one-dark.min.css">
+    <style>
+        :root {
+            --primary: #cf0f0f;
+            --secondary: #fffef3;
+            --dark: #070224;
+            --darker: #041624;
+            --light: #f5f6fa;
+            --accent: #fd79a8;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 40%;
+            background: rgba(0, 5, 10, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            background: yellow;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            color: wheat;
+            font-size: 0.9rem;
+        }
+        .logo img {
+            height: 40px;
+            transition: var(--transition);
+        }
+
+        /* Project Info */
+        .project-info {
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease;
+        }
+
+        .project-info label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .project-info input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: var(--light);
+            transition: all 0.3s ease;
+        }
+
+        .project-info input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.3);
+        }
+
+        /* Template Selector */
+        .template-selector {
+            margin-bottom: 2rem;
+            animation: slideUp 0.6s ease;
+        }
+
+        .template-selector label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .template-selector select {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: rgb(255, 255, 255);
+            transition: all 0.3s ease;
+        }
+
+        .template-selector select:focus {
+            outline: none;
+            background: rgb(4, 1, 22);
+            color: rgb(190, 190, 190);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.3);
+        }
+
+        /* Code Tabs */
+        .code-tabs-container {
+            margin-bottom: 1rem;
+            animation: slideUp 0.7s ease;
+        }
+
+        .tabs-header {
+            display: flex;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px 5px 0 0;
+            overflow: hidden;
+            flex-wrap: wrap;
+        }
+
+        .tab-buttons {
+            display: flex;
+            flex: 1;
+            overflow-x: auto;
+        }
+
+        .tab-btn {
+            padding: 0.8rem 1.2rem;
+            background: transparent;
+            border: none;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--accent);
+        }
+
+        .add-tab-btn {
+            padding: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-tab-btn:hover {
+            background: var(--success);
+        }
+
+        .tab-content {
+            display: none;
+            height: 300px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 0 0 5px 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .code-editor-container {
+            position: relative;
+            height: 100%;
+        }
+
+        .code-file-name {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 0.5rem 1rem;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            z-index: 2;
+        }
+
+        .code-file-name input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--light);
+            padding: 0.3rem 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .code-file-name input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .code-input {
+            width: 100%;
+            height: 100%;
+            padding: 3rem 1rem 1rem;
+            background: transparent;
+            border: none;
+            color: linear-gradient(to right, var(--danger), var(--accent));
+            font-family: 'Courier New', Courier, monospace;
+            resize: none;
+            outline: none;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            tab-size: 4;
+        }
+
+        .hljs {
+            background: transparent !important;
+            padding: 3rem 1rem 1rem !important;
+        }
+
+        /* Code Actions */
+        .code-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+        }
+
+        .add-folder-btn, .refresh-all-btn {
+            padding: 0.8rem 1.2rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 5px;
+            color: var(--light);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .add-folder-btn {
+            background: var(--warning);
+            color: var(--darker);
+        }
+
+        .refresh-all-btn {
+            background: var(--secondary);
+            color: var(--darker);
+        }
+
+        .add-folder-btn:hover, .refresh-all-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .add-folder-btn:active, .refresh-all-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Generate Button */
+        .generate-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            animation: slideUp 0.8s ease;
+        }
+
+        .generate-btn:hover {
+            background: rgb(68, 6, 104);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .generate-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 2rem;
+            display: flex;
+            background: rgb(4, 1, 22);
+            flex-direction: column;
+        }
+
+        /* Preview Panel */
+        .preview-panel {
+            flex: 1;
+            background: rgb(6, 1, 32);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .preview-header h2 {
+            font-size: 1.2rem;
+            color: var(--light);
+        }
+
+        .preview-toggle {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: var(--light);
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .preview-toggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .preview-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: rgb(27, 27, 27);
+            border-radius: 5px;
+        }
+
+        /* Structure Panel */
+        .structure-panel {
+            background: rgba(1, 1, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        .structure-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .structure-header h2 {
+            font-size: 1.2rem;
+            color: var(--light);
+        }
+
+        .download-btn {
+            background: var(--success);
+            border: none;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .download-btn:hover {
+            background: #00a884;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .file-structure {
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--light);
+            line-height: 1.8;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .file-structure ul {
+            list-style-type: none;
+            padding-left: 1.5rem;
+        }
+
+        .file-structure li {
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .file-structure li.folder::before {
+            content: '📁 ';
+        }
+
+        .file-structure li.file::before {
+            content: '📄 ';
+        }
+
+        .file-structure li::before {
+            position: absolute;
+            left: 0;
+        }
+
+        .file-structure li .file-name {
+            margin-left: 0.5rem;
+        }
+
+        .folder-contents {
+            padding-left: 1.5rem;
+            margin-left: 0.5rem;
+            border-left: 1px dashed rgba(255, 255, 255, 0.2);
+        }
+
+        /* Loading Animation */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(30, 39, 46, 0.9);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1.5rem;
+        }
+
+        .loading-text {
+            color: var(--light);
+            font-size: 1.2rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: var(--darker);
+            border-radius: 10px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.3rem;
+            color: var(--light);
+        }
+
+        .close-modal {
+            background: transparent;
+            border: none;
+            color: var(--light);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--secondary);
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgb(6, 2, 22);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 5px;
+            color: yellow;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: 1;
+            background: rgba(255, 255, 255, 0.1);
+            color: rgb(248, 112, 0);
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            padding: 0.7rem 1.2rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-btn.cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: var (--light);
+        }
+
+        .modal-btn.confirm {
+            background: var(--primary);
+            color: white;
+        }
+
+        .modal-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .modal-btn:active {
+            transform: translateY(0);
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 992px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar, .main-content {
+                width: 100%;
+            }
+
+            .sidebar {
+                border-right: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            .preview-panel {
+                height: 300px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .tab-btn {
+                padding: 0.8rem;
+                font-size: 0.8rem;
+            }
+
+            .code-input {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="header">
+                <div class="logo">
+                    <img src="minlogo.png" alt="Janith Graphic Studio">
+                </div>
+                <h1>JGS Advanced Code Project Builder</h1>
+                <p>Create and organize your code projects with ease</p>
+            </div>
+
+            <div class="project-info">
+                <label for="project-name">Project Name</label>
+                <input type="text" id="project-name" placeholder="e.g. jgs-cdb-system" value="jgs-cdb-system">
+            </div>
+
+            <div class="template-selector">
+                <label for="template">Select Template</label>
+                <select id="template">
+                    <option value="blank">Blank Project</option>
+                    <option value="basic-html">Basic HTML</option>
+                    <option value="web-app">Web Application</option>
+                    <option value="dashboard">Dashboard Template</option>
+                </select>
+            </div>
+
+            <div class="code-tabs-container">
+                <div class="tabs-header">
+                    <div class="tab-buttons" id="tab-buttons">
+                        <button class="tab-btn active" data-tab="html">HTML</button>
+                        <button class="tab-btn" data-tab="css">CSS</button>
+                        <button class="tab-btn" data-tab="js">JavaScript</button>
+                        <button class="tab-btn" data-tab="python">Python</button>
+                    </div>
+                    <button class="add-tab-btn" id="add-tab-btn">+ Add Tab</button>
+                </div>
+
+                <div class="tab-content active" id="html-tab">
+                    <div class="code-editor-container">
+                        <div class="code-file-name">
+                            <input type="text" value="index.html" placeholder="Enter file name with extension">
+                        </div>
+                        <textarea class="code-input" id="html-code" placeholder="Enter your HTML code here..."></textarea>
+                        <pre><code class="language-html" id="html-highlight"></code></pre>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="css-tab">
+                    <div class="code-editor-container">
+                        <div class="code-file-name">
+                            <input type="text" value="style.css" placeholder="Enter file name with extension">
+                        </div>
+                        <textarea class="code-input" id="css-code" placeholder="Enter your CSS code here..."></textarea>
+                        <pre><code class="language-css" id="css-highlight"></code></pre>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="js-tab">
+                    <div class="code-editor-container">
+                        <div class="code-file-name">
+                            <input type="text" value="script.js" placeholder="Enter file name with extension">
+                        </div>
+                        <textarea class="code-input" id="js-code" placeholder="Enter your JavaScript code here..."></textarea>
+                        <pre><code class="language-javascript" id="js-highlight"></code></pre>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="python-tab">
+                    <div class="code-editor-container">
+                        <div class="code-file-name">
+                            <input type="text" value="main.py" placeholder="Enter file name with extension">
+                        </div>
+                        <textarea class="code-input" id="python-code" placeholder="Enter your Python code here..."></textarea>
+                        <pre><code class="language-python" id="python-highlight"></code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-actions">
+                <button class="add-folder-btn" id="add-folder-btn">
+                    <span>📁</span> Add Folder
+                </button>
+                <button class="refresh-all-btn" id="refresh-all-btn">
+                    <span>🔄</span> Refresh All
+                </button>
+            </div>
+
+            <button class="generate-btn" id="generate-btn">Generate Project</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="preview-panel">
+                <div class="preview-header">
+                    <h2>Live Preview</h2>
+                    <button class="preview-toggle" id="refresh-preview">
+                        <span>🔄</span> Refresh Preview
+                    </button>
+                </div>
+                <iframe class="preview-iframe" id="preview-iframe" sandbox="allow-scripts allow-same-origin"></iframe>
+            </div>
+
+            <div class="structure-panel">
+                <div class="structure-header">
+                    <h2>Project Structure</h2>
+                    <button class="download-btn" id="download-btn">
+                        <span>📥</span> Download ZIP
+                    </button>
+                </div>
+                <div class="file-structure" id="file-structure">
+                    <p>Your project structure will appear here after generation.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loader"></div>
+        <div class="loading-text">Building your project...</div>
+    </div>
+
+    <!-- Add Tab Modal -->
+    <div class="modal-overlay" id="add-tab-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add New Code Tab</h3>
+                <button class="close-modal" id="close-add-tab-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-tab-name">Tab Name</label>
+                    <input type="text" id="new-tab-name" placeholder="e.g. PHP, Ruby, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="new-tab-file">Default File Name</label>
+                    <input type="text" id="new-tab-file" placeholder="e.g. script.php, app.rb">
+                </div>
+                <div class="form-group">
+                    <label for="new-tab-language">Language Syntax</label>
+                    <select id="new-tab-language">
+                        <option value="plaintext">Plain Text</option>
+                        <option value="html">HTML</option>
+                        <option value="css">CSS</option>
+                        <option value="javascript">JavaScript</option>
+                        <option value="python">Python</option>
+                        <option value="php">PHP</option>
+                        <option value="ruby">Ruby</option>
+                        <option value="java">Java</option>
+                        <option value="csharp">C#</option>
+                        <option value="cpp">C++</option>
+                        <option value="sql">SQL</option>
+                        <option value="json">JSON</option>
+                        <option value="xml">XML</option>
+                        <option value="markdown">Markdown</option>
+                        <option value="bash">Bash</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="cancel-add-tab">Cancel</button>
+                <button class="modal-btn confirm" id="confirm-add-tab">Add Tab</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Folder Modal -->
+    <div class="modal-overlay" id="add-folder-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Add New Folder</h3>
+                <button class="close-modal" id="close-add-folder-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-folder-name">Folder Name</label>
+                    <input type="text" id="new-folder-name" placeholder="e.g. assets, src, etc.">
+                </div>
+                <div class="form-group">
+                    <label for="folder-location">Location</label>
+                    <select id="folder-location">
+                        <option value="root">Root Directory</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="folder-files">Files (comma separated)</label>
+                    <input type="text" id="folder-files" placeholder="e.g. index.html, style.css, script.js">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="cancel-add-folder">Cancel</button>
+                <button class="modal-btn confirm" id="confirm-add-folder">Add Folder</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>by JGS Lanka Co. | JGS Lanka Software Development Group 2025©</p> 
+        </div>
+
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize highlight.js
+            hljs.highlightAll();
+            
+            // Tab management
+            const tabBtnsContainer = document.getElementById('tab-buttons');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const addTabBtn = document.getElementById('add-tab-btn');
+            const addTabModal = document.getElementById('add-tab-modal');
+            const closeAddTabModal = document.getElementById('close-add-tab-modal');
+            const cancelAddTab = document.getElementById('cancel-add-tab');
+            const confirmAddTab = document.getElementById('confirm-add-tab');
+            
+            // Folder management
+            const addFolderBtn = document.getElementById('add-folder-btn');
+            const addFolderModal = document.getElementById('add-folder-modal');
+            const closeAddFolderModal = document.getElementById('close-add-folder-modal');
+            const cancelAddFolder = document.getElementById('cancel-add-folder');
+            const confirmAddFolder = document.getElementById('confirm-add-folder');
+            
+            // Other elements
+            const refreshAllBtn = document.getElementById('refresh-all-btn');
+            const refreshPreviewBtn = document.getElementById('refresh-preview');
+            const generateBtn = document.getElementById('generate-btn');
+            const downloadBtn = document.getElementById('download-btn');
+            const fileStructure = document.getElementById('file-structure');
+            const loadingOverlay = document.getElementById('loading-overlay');
+            
+            // Project data
+            let projectData = {
+                name: 'jgs-cdb-system',
+                files: {},
+                folders: []
+            };
+            
+            // Track all tabs
+            let tabs = [
+                { id: 'html', name: 'HTML', fileName: 'index.html', language: 'html' },
+                { id: 'css', name: 'CSS', fileName: 'style.css', language: 'css' },
+                { id: 'js', name: 'JavaScript', fileName: 'script.js', language: 'javascript' },
+                { id: 'python', name: 'Python', fileName: 'main.py', language: 'python' }
+            ];
+            
+            // Initialize tabs
+            function initTabs() {
+                // Set up existing tabs
+                tabs.forEach(tab => {
+                    const tabBtn = document.querySelector(`.tab-btn[data-tab="${tab.id}"]`);
+                    const tabContent = document.getElementById(`${tab.id}-tab`);
+                    const fileNameInput = tabContent.querySelector('.code-file-name input');
+                    const codeInput = tabContent.querySelector('.code-input');
+                    const highlightElement = tabContent.querySelector('code');
+                    
+                    // Set initial file name
+                    fileNameInput.value = tab.fileName;
+                    
+                    // Handle tab switching
+                    if (tabBtn) {
+                        tabBtn.addEventListener('click', () => {
+                            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                            
+                            tabBtn.classList.add('active');
+                            tabContent.classList.add('active');
+                            
+                            // Update syntax highlighting
+                            updateSyntaxHighlighting(codeInput, highlightElement, tab.language);
+                        });
+                    }
+                    
+                    // Handle code input with syntax highlighting
+                    codeInput.addEventListener('input', () => {
+                        updateSyntaxHighlighting(codeInput, highlightElement, tab.language);
+                    });
+                    
+                    // Handle file name changes
+                    fileNameInput.addEventListener('change', () => {
+                        tab.fileName = fileNameInput.value;
+                    });
+                });
+                
+                // Set first tab as active by default
+                document.querySelector('.tab-btn').click();
+            }
+            
+            // Update syntax highlighting
+            function updateSyntaxHighlighting(inputElement, highlightElement, language) {
+                highlightElement.textContent = inputElement.value;
+                highlightElement.className = `language-${language}`;
+                hljs.highlightElement(highlightElement);
+            }
+            
+            // Add new tab
+            addTabBtn.addEventListener('click', () => {
+                addTabModal.classList.add('active');
+            });
+            
+            [closeAddTabModal, cancelAddTab].forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addTabModal.classList.remove('active');
+                });
+            });
+            
+            confirmAddTab.addEventListener('click', () => {
+                const tabName = document.getElementById('new-tab-name').value.trim();
+                const fileName = document.getElementById('new-tab-file').value.trim();
+                const language = document.getElementById('new-tab-language').value;
+                
+                if (tabName && fileName) {
+                    const tabId = tabName.toLowerCase().replace(/\s+/g, '-');
+                    
+                    // Create new tab object
+                    const newTab = {
+                        id: tabId,
+                        name: tabName,
+                        fileName: fileName,
+                        language: language
+                    };
+                    
+                    tabs.push(newTab);
+                    
+                    // Create new tab button
+                    const newTabBtn = document.createElement('button');
+                    newTabBtn.className = 'tab-btn';
+                    newTabBtn.dataset.tab = tabId;
+                    newTabBtn.textContent = tabName;
+                    tabBtnsContainer.appendChild(newTabBtn);
+                    
+                    // Create new tab content
+                    const newTabContent = document.createElement('div');
+                    newTabContent.className = 'tab-content';
+                    newTabContent.id = `${tabId}-tab`;
+                    
+                    newTabContent.innerHTML = `
+                        <div class="code-editor-container">
+                            <div class="code-file-name">
+                                <input type="text" value="${fileName}" placeholder="Enter file name with extension">
+                            </div>
+                            <textarea class="code-input" id="${tabId}-code" placeholder="Enter your ${tabName} code here..."></textarea>
+                            <pre><code class="language-${language}" id="${tabId}-highlight"></code></pre>
+                        </div>
+                    `;
+                    
+                    document.querySelector('.code-tabs-container').appendChild(newTabContent);
+                    
+                    // Initialize the new tab
+                    const fileNameInput = newTabContent.querySelector('.code-file-name input');
+                    const codeInput = newTabContent.querySelector('.code-input');
+                    const highlightElement = newTabContent.querySelector('code');
+                    
+                    // Handle tab switching
+                    newTabBtn.addEventListener('click', () => {
+                        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                        
+                        newTabBtn.classList.add('active');
+                        newTabContent.classList.add('active');
+                        
+                        // Update syntax highlighting
+                        updateSyntaxHighlighting(codeInput, highlightElement, language);
+                    });
+                    
+                    // Handle code input with syntax highlighting
+                    codeInput.addEventListener('input', () => {
+                        updateSyntaxHighlighting(codeInput, highlightElement, language);
+                    });
+                    
+                    // Handle file name changes
+                    fileNameInput.addEventListener('change', () => {
+                        newTab.fileName = fileNameInput.value;
+                    });
+                    
+                    // Close modal and reset form
+                    addTabModal.classList.remove('active');
+                    document.getElementById('new-tab-name').value = '';
+                    document.getElementById('new-tab-file').value = '';
+                    document.getElementById('new-tab-language').value = 'plaintext';
+                    
+                    // Switch to the new tab
+                    newTabBtn.click();
+                }
+            });
+            
+            // Add folder functionality
+            addFolderBtn.addEventListener('click', () => {
+                addFolderModal.classList.add('active');
+            });
+            
+            [closeAddFolderModal, cancelAddFolder].forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addFolderModal.classList.remove('active');
+                });
+            });
+            
+            confirmAddFolder.addEventListener('click', () => {
+                const folderName = document.getElementById('new-folder-name').value.trim();
+                const location = document.getElementById('folder-location').value;
+                const files = document.getElementById('folder-files').value.trim().split(',');
+
+                if (folderName) {
+                    const folder = {
+                        name: folderName,
+                        location: location,
+                        files: files.map(file => file.trim()).filter(file => file) // Remove empty entries
+                    };
+
+                    projectData.folders.push(folder);
+
+                    // Close modal and reset form
+                    addFolderModal.classList.remove('active');
+                    document.getElementById('new-folder-name').value = '';
+                    document.getElementById('folder-files').value = '';
+
+                    // Update file structure display
+                    renderFileStructure();
+                }
+            });
+            
+            // Refresh all previews
+            refreshAllBtn.addEventListener('click', () => {
+                updatePreview();
+            });
+            
+            // Refresh preview
+            refreshPreviewBtn.addEventListener('click', updatePreview);
+            
+            function updatePreview() {
+    const htmlCode = document.getElementById('html-code').value;
+    const cssCode = document.getElementById('css-code').value;
+    const jsCode = document.getElementById('js-code').value;
+
+    const iframe = document.getElementById('preview-iframe');
+
+    // Use srcdoc to update iframe content
+    iframe.srcdoc = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>${cssCode}</style>
+        </head>
+        <body>
+            ${htmlCode}
+            <script>${jsCode.replace(/<\/script>/g, '<\\/script>')}<\/script>
+        </body>
+        </html>
+    `;
+}
+            
+            // Generate project
+            generateBtn.addEventListener('click', generateProject);
+            
+            function generateProject() {
+                loadingOverlay.classList.add('active');
+                
+                setTimeout(() => {
+                    loadingOverlay.classList.remove('active');
+                    
+                    const projectName = document.getElementById('project-name').value || 'jgs-cdb-system';
+                    projectData.name = projectName;
+                    
+                    // Clear existing files
+                    projectData.files = {};
+                    
+                    // Collect all files from tabs
+                    tabs.forEach(tab => {
+                        const tabContent = document.getElementById(`${tab.id}-tab`);
+                        if (tabContent) {
+                            const codeInput = tabContent.querySelector('.code-input');
+                            const fileNameInput = tabContent.querySelector('.code-file-name input');
+                            
+                            if (codeInput && fileNameInput) {
+                                const fileName = fileNameInput.value.trim();
+                                if (fileName && codeInput.value.trim()) {
+                                    projectData.files[fileName] = codeInput.value;
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Generate file structure display
+                    renderFileStructure();
+                    
+                    // Show download button
+                    downloadBtn.style.display = 'flex';
+                }, 4000);
+            }
+            
+            // Render file structure
+            function renderFileStructure() {
+    let structureHTML = `<ul>
+        <li class="folder">
+            <span class="file-name">${projectData.name}</span>
+            <div class="folder-contents">
+                <ul>`;
+
+    // Add files in the root directory
+    Object.keys(projectData.files).forEach(fileName => {
+        structureHTML += `<li class="file"><span class="file-name">${fileName}</span></li>`;
+    });
+
+    // Add folders and their files
+    projectData.folders.forEach(folder => {
+        structureHTML += `
+            <li class="folder">
+                <span class="file-name">${folder.name}</span>
+                <div class="folder-contents">
+                    <ul>`;
+        folder.files.forEach(file => {
+            structureHTML += `<li class="file"><span class="file-name">${file}</span></li>`;
+        });
+        structureHTML += `</ul>
+                </div>
+            </li>`;
+    });
+
+    structureHTML += `</ul>
+            </div>
+        </li>
+    </ul>`;
+
+    fileStructure.innerHTML = structureHTML;
+}
+            
+            // Download project
+            downloadBtn.addEventListener('click', downloadProject);
+            
+            function downloadProject() {
+    const zip = new JSZip();
+    const rootFolder = zip.folder(projectData.name);
+
+    // Add files in the root directory
+    Object.entries(projectData.files).forEach(([fileName, content]) => {
+        rootFolder.file(fileName, content);
+    });
+
+    // Add folders and their files
+    projectData.folders.forEach(folder => {
+        const subFolder = rootFolder.folder(folder.name);
+        folder.files.forEach(fileName => {
+            subFolder.file(fileName, `/* Content for ${fileName} */`); // Placeholder content
+        });
+    });
+
+    // Generate and download ZIP
+    zip.generateAsync({ type: "blob" }).then(content => {
+        saveAs(content, `${projectData.name}.zip`);
+    });
+}
+            
+            // Initialize the app
+            initTabs();
+            updatePreview();
+        });
+    </script>
+</body>
+</html>
