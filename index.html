@@ -6,32 +6,476 @@
     <title>JGS Lanka - Code Organizer</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
         :root {
-            --primary: #4f8cfd;
-            --secondary: #9bbff5;
-            --dark: #ffffff;
+            --primary: #0e0b99;
+            --secondary: #7332eb;
+            --dark: #1a1a1a;
             --light: #f5f6fa;
             --success: #00b894;
             --danger: #d63031;
             --warning: #fdcb6e;
             --info: #0984e3;
+            --bg-dark: #121212;
+            --bg-light: #f8f9fa;
+            --text-dark: #ffffff;
+            --text-light: #333333;
+            --card-bg: rgba(30, 30, 30, 0.8);
+            --card-border: rgba(255, 255, 255, 0.1);
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             transition: all 0.3s ease;
         }
 
+        @font-face {
+            font-family: 'Poppins';
+            src: url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        }
+
         body {
-            background: rgb(0, 0, 0);
-            color: rgb(255, 196, 0);
+            background: var(--bg-dark);
+            color: var(--text-dark);
             min-height: 100vh;
-            backdrop-filter: blur(10px);
             overflow-x: hidden;
+        }
+
+        body.light-mode {
+            background: var(--bg-light);
+            color: var(--text-light);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --card-border: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #121212 0%, #222222 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            transition: all 0.5s ease;
+        }
+
+        .welcome-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-logo {
+            font-size: 4rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #006eff, #9339fa);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(79, 140, 253, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.2rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 3rem;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.6;
+        }
+
+        .welcome-progress {
+            width: 200px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .welcome-progress-bar {
+            height: 100%;
+            width: 0;
+            background: linear-gradient(90deg, #ff0000, #9900ff);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        /* Intro Screen */
+        .intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #121212 0%, #141414 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+            padding: 2rem;
+        }
+
+        .intro-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .intro-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 15px 30px rgb(34, 34, 34);
+            border: 0.2px solid rgba(255, 174, 0, 0.301);
+            backdrop-filter: blur(10px);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s ease 0.3s;
+            text-align: center;
+        }
+
+        .intro-screen.active .intro-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .intro-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(45deg, #7409ff, #0166ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .intro-description {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        .intro-features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .intro-feature {
+            background: rgba(79, 140, 253, 0.1);
+            border-radius: 10px;
+            padding: 1.5rem;
+            width: 200px;
+            border: 1px solid rgba(98, 0, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .intro-feature:hover {
+            transform: translateY(-5px);
+            color: rgba(218, 216, 255, 0.301);
+            box-shadow: 0 10px 20px rgba(50, 27, 253, 0.2);
+            border-color: rgba(255, 0, 0, 0.267);
+        }
+
+        .intro-feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+        }
+
+        .intro-feature-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .intro-feature-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .intro-start-btn {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            background: linear-gradient(45deg, #0e0775, #20043b);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(191, 112, 255, 0.3);
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .intro-start-btn:hover {
+            transform: translateY(-3px);
+            background: linear-gradient(45deg, #2a074b, #070664);
+            box-shadow: 0 8px 20px rgba(252, 94, 94, 0.4);
+        }
+
+        .intro-start-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Project Setup Screens */
+        .setup-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #121212 0%, #141414 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1998;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+            padding: 2rem;
+        }
+
+        .setup-screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .setup-card {
+            background: rgb(29, 29, 29);
+            border-radius: 20px;
+            padding: 2.5rem;
+            max-width: 800px;
+            width: 90%;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            transform: translateY(20px);
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .setup-screen.active .setup-card {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .setup-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .setup-title-icon {
+            font-size: 2.5rem;
+        }
+
+        .setup-description {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .setup-form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .setup-label {
+            display: block;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .setup-input {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-dark);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .setup-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 140, 253, 0.3);
+        }
+
+        .setup-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+
+        .setup-btn {
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.8rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .setup-btn-primary {
+            background: linear-gradient(45deg, #0e0775, #20043b);
+            color: white;
+            box-shadow: 0 5px 15px rgba(79, 140, 253, 0.3);
+        }
+
+        .setup-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(79, 140, 253, 0.4);
+        }
+
+        .setup-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .setup-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Template Selector */
+        .template-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .template-option {
+            background: rgba(30, 30, 30, 0.6);
+            border: 1px solid rgba(255, 187, 0, 0.363);
+            border-radius: 15px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .template-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(79, 140, 253, 0.1) 0%, rgba(155, 191, 245, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .template-option:hover {
+            transform: translateY(-10px);
+           box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 140, 255, 0.425);
+        }
+
+        .template-option:hover::before {
+            opacity: 1;
+        }
+
+        .template-option.selected {
+            background: rgba(89, 0, 255, 0.15);
+            border-color: rgba(255, 0, 0, 0.397);
+            box-shadow: 0 0 0 2px rgba(79, 140, 253, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .template-option.selected::after {
+            content: '✓';
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            width: 25px;
+            height: 25px;
+            background: rgb(255, 174, 0);
+            color: rgb(3, 0, 0);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            box-shadow: 0 3px 10px rgba(79, 140, 253, 0.5);
+        }
+
+        .template-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .template-option:hover .template-icon {
+            transform: scale(1.2);
+        }
+
+        .template-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .template-option:hover .template-name {
+            color: rgb(255, 196, 0);
+        }
+
+        .template-desc {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
+        }
+
+        /* Main App Container (shown after setup) */
+        .main-app {
+            display: none;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+
+        .main-app.active {
+            display: block;
+            opacity: 1;
         }
 
         .container {
@@ -53,35 +497,79 @@
             color: var(--primary);
             margin-bottom: 0.5rem;
             text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            background: linear-gradient(45deg, #4f8cfd, #9bbff5);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
         }
 
         .subtitle {
-            color: white;
+            color: rgba(255, 255, 255, 0.7);
             margin-bottom: 1rem;
         }
 
-        /* Main App Styles */
-        .app-container {
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            padding: 0.5rem;
             display: flex;
-            flex-direction: column;
-            gap: 2rem;
+            align-items: center;
+            gap: 0.5rem;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .theme-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn.active {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 3px 10px rgba(79, 140, 253, 0.5);
+        }
+
+        .theme-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         /* Panel Styles */
         .panel {
-            background: rgb(22, 22, 22);
+            background: rgba(30, 30, 30, 0.6);
             border-radius: 15px;
             padding: 1.5rem;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 10px 20px rgba(162, 0, 255, 0.2);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             border: 1px solid rgba(255, 166, 0, 0.24);
             animation: slideUp 0.5s ease;
+            transition: all 0.3s ease;
+           
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
         }
 
         .panel-title {
             font-size: 1.5rem;
             margin-bottom: 1rem;
-            color: var(--primary);
+            color: white;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -90,30 +578,38 @@
         /* Form Styles */
         .form-group {
             margin-bottom: 1.5rem;
-            background: rgb(17, 17, 17);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-group:hover {
+            background: rgba(0, 0, 0, 0.3);
         }
 
         label {
             display: block;
             margin-bottom: 0.5rem;
-            color: rgb(255, 166, 0);
+            color: rgb(197, 197, 197);
+            font-weight: 500;
         }
 
         input, select, textarea {
             width: 100%;
             padding: 0.8rem;
             border-radius: 8px;
-            border: 1px solid rgba(255, 0, 0, 0.171);
-            background: rgb(26, 26, 26);
-            color: var(--light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text-dark);
             font-size: 1rem;
+            transition: all 0.3s ease;
         }
 
         input:focus, select:focus, textarea:focus {
             outline: none;
-            background: rgb(26, 26, 26);
             border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(255, 0, 0, 0.3);
+            box-shadow: 0 0 0 3px rgba(79, 140, 253, 0.3);
         }
 
         /* Button Styles */
@@ -128,84 +624,63 @@
             align-items: center;
             justify-content: center;
             gap: 0.5rem;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: translateX(-100%);
+            transition: transform 0.4s ease;
+        }
+
+        .btn:hover::before {
+            transform: translateX(100%);
         }
 
         .btn-primary {
-            background: rgb(17, 78, 5);
+            background: linear-gradient(45deg, #12098b, #380463);
             color: white;
+            box-shadow: 0 5px 15px rgba(29, 108, 255, 0.3);
         }
 
         .btn-primary:hover {
-            background: #6b0707;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 167, 3, 0.089);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(79, 140, 253, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: translateY(1px);
         }
 
         .btn-secondary {
-            background: rgb(255, 166, 0);
-            color: rgb(32, 2, 2);
+            background: linear-gradient(45deg, #1b1b1b, #1b1b1b);
+            color: rgb(255, 255, 255);
+            box-shadow: 0 5px 15px rgba(255, 0, 8, 0.11);
         }
 
         .btn-secondary:hover {
-            background: #810404;
-            transform: translateY(-2px);
+            background: linear-gradient(45deg, #1b1b1b, #141414);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(88, 7, 134, 0.4);
         }
 
         .btn-outline {
             background: transparent;
-            border: 1px solid rgb(255, 0, 0);
-            color: rgb(255, 255, 255);
+            border: 1px solid rgb(255, 174, 0);
+            color: white;
         }
 
         .btn-outline:hover {
-            background: rgba(83, 7, 7, 0.404);
-        }
-
-        /* Project Format Selector */
-        .format-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-
-        .format-option {
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 1.5rem 1rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .format-option:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-            border-color: var(--primary);
-        }
-
-        .format-option.selected {
-            background: rgba(108, 92, 231, 0.2);
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(108, 92, 231, 0.3);
-        }
-
-        .format-icon {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            color: var(--primary);
-        }
-
-        .format-name {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
-
-        .format-desc {
-            font-size: 0.8rem;
-            color: rgba(255, 255, 255, 0.7);
+            background: rgba(79, 140, 253, 0.1);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(79, 140, 253, 0.2);
         }
 
         /* File Tree Styles */
@@ -229,10 +704,12 @@
             padding: 0.5rem;
             cursor: pointer;
             border-radius: 5px;
+            transition: all 0.3s ease;
         }
 
         .folder-header:hover {
             background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
         }
 
         .folder-icon {
@@ -252,6 +729,7 @@
 
         .folder-contents.open {
             display: block;
+            animation: fadeIn 0.3s ease;
         }
 
         .file {
@@ -261,10 +739,12 @@
             padding: 0.5rem;
             cursor: pointer;
             border-radius: 5px;
+            transition: all 0.3s ease;
         }
 
         .file:hover {
             background: rgba(255, 255, 255, 0.05);
+            transform: translateX(5px);
         }
 
         .file-icon {
@@ -278,6 +758,12 @@
         .file-actions {
             display: flex;
             gap: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .file:hover .file-actions {
+            opacity: 1;
         }
 
         .action-btn {
@@ -286,28 +772,30 @@
             color: rgba(255, 255, 255, 0.5);
             cursor: pointer;
             font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
 
         .action-btn:hover {
-            color: var(--light);
+            color: var(--primary);
+            transform: scale(1.2);
         }
 
         /* Code Editor Styles */
         .code-editor {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
 
         .code-editor.open {
             opacity: 1;
@@ -315,26 +803,33 @@
         }
 
         .editor-container {
-    background: #282a36;
-    border-radius: 10px;
-    width: 90%;
-    height: 90vh;
-    max-width: 1200px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-}
+            background: #282a36;
+            border-radius: 15px;
+            width: 90%;
+            height: 90vh;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            transform: scale(0.9);
+            transition: all 0.3s ease;
+        }
 
-.editor-header {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.8rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
+        .code-editor.open .editor-container {
+            transform: scale(1);
+        }
+
+        .editor-header {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
         .editor-title {
             display: flex;
             align-items: center;
@@ -348,85 +843,79 @@
             font-size: 1.5rem;
             cursor: pointer;
             transition: color 0.2s ease;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .editor-close:hover {
+            background: rgba(255, 255, 255, 0.1);
             color: var(--danger);
         }
 
         .editor-body {
-    flex-grow: 1;
-    overflow: hidden;
-    display: flex;
-    position: relative;
-}
+            flex-grow: 1;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
 
-.editor-line-numbers {
-    background: rgba(0, 0, 0, 0.2);
-    padding: 1rem 0.5rem;
-    font-family: monospace;
-    text-align: right;
-    color: rgba(255, 255, 255, 0.5);
-    overflow-y: auto;
-    user-select: none;
-    min-width: 40px;
-}
+        .editor-line-numbers {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem 0.5rem;
+            font-family: monospace;
+            text-align: right;
+            color: rgba(255, 255, 255, 0.5);
+            overflow-y: auto;
+            user-select: none;
+            min-width: 40px;
+        }
 
-.editor-textarea {
-    flex-grow: 1;
-    background: transparent;
-    color: transparent;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1rem;
-    line-height: 1.5;
-    padding: 1rem;
-    border: none;
-    outline: none;
-    resize: none;
-    white-space: pre;
-    overflow: auto;
-    caret-color: white;
-    tab-size: 4;
-}
+        .editor-textarea {
+            flex-grow: 1;
+            background: transparent;
+            color: transparent;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            padding: 1rem;
+            border: none;
+            outline: none;
+            resize: none;
+            white-space: pre;
+            overflow: auto;
+            caret-color: white;
+            tab-size: 4;
+        }
 
-.editor-highlight {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 1rem;
-    font-family: 'Courier New', monospace;
-    font-size: 1rem;
-    line-height: 1.5;
-    white-space: pre;
-    overflow: auto;
-    pointer-events: none;
-    color: #f8f8f2;
-    background: transparent;
-}
+        .editor-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            white-space: pre;
+            overflow: auto;
+            pointer-events: none;
+            color: #f8f8f2;
+            background: transparent;
+        }
 
-.editor-footer {
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.8rem 1rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-/* Responsive styles for editor */
-@media (max-width: 768px) {
-    .editor-container {
-        width: 95%;
-        height: 95vh;
-    }
-    
-    .editor-line-numbers {
-        padding: 1rem 0.3rem;
-        min-width: 30px;
-    }
-}
+        .editor-footer {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem 1rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
 
         /* Loading Screen */
         .loading-screen {
@@ -459,6 +948,20 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .loading-spinner::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border: 8px solid transparent;
+            border-top-color: #9bbff5;
+            border-radius: 50%;
+            animation: spin 1.5s linear infinite;
         }
 
         .loading-text {
@@ -494,36 +997,40 @@
             position: fixed;
             bottom: 20px;
             left: 50%;
-            transform: translateX(-50%);
+            transform: translateX(-50%) translateY(100px);
             background: var(--dark);
             color: white;
             padding: 1rem 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-radius: 50px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             gap: 0.8rem;
             z-index: 1002;
             opacity: 0;
-            transition: opacity 0.3s ease, bottom 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .snackbar.show {
             opacity: 1;
-            bottom: 30px;
+            transform: translateX(-50%) translateY(0);
         }
 
         .snackbar.success {
-            background: var(--success);
+            background: linear-gradient(45deg, var(--success), #55efc4);
         }
 
         .snackbar.error {
-            background: var(--danger);
+            background: linear-gradient(45deg, var(--danger), #ff7675);
         }
 
         .snackbar.warning {
-            background: var(--warning);
+            background: linear-gradient(45deg, var(--warning), #ffeaa7);
             color: var(--dark);
+        }
+
+        .snackbar.info {
+            background: linear-gradient(45deg, var(--info), #74b9ff);
         }
 
         .snackbar-icon {
@@ -543,6 +1050,30 @@
             .editor-container {
                 width: 95%;
                 max-height: 90vh;
+            }
+
+            .welcome-logo {
+                font-size: 2.5rem;
+            }
+
+            .intro-card {
+                padding: 1.5rem;
+            }
+
+            .intro-title {
+                font-size: 1.8rem;
+            }
+
+            .intro-feature {
+                width: 100%;
+            }
+
+            .setup-card {
+                padding: 1.5rem;
+            }
+
+            .setup-title {
+                font-size: 1.5rem;
             }
         }
 
@@ -571,106 +1102,224 @@
             0%, 80%, 100% { transform: scale(0); }
             40% { transform: scale(1); }
         }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo">JGS Advanced Code Project Builder</div>
-            <div class="subtitle">Create and organize your code projects with ease</div>
-        </header>
+    <!-- Welcome Screen -->
+    <div class="welcome-screen" id="welcome-screen">
+        <div class="welcome-logo animate__animated animate__fadeInDown"> Advanced Code Project Builder 2025 v1.2</div>
+        <div class="welcome-subtitle animate__animated animate__fadeInUp">ඔබේ කේත ව්‍යාපෘති සංවිධානය කිරීම සඳහා උසස්ම මෙවලම</div>
+        <div class="welcome-progress animate__animated animate__fadeInUp">
+            <div class="welcome-progress-bar" id="welcome-progress"></div>
+        </div>
+    </div>
 
-        <div class="app-container">
-            <!-- Project Setup Panel -->
-            <div class="panel">
-                <h2 class="panel-title">
-                    <span>📁</span>
-                    Project Management
-                </h2>
-                
-                <div class="form-group">
-                    <label for="project-name">Project Name</label>
-                    <input type="text" id="project-name" placeholder="මගේ වෙබ් අඩවිය">
+    <!-- Intro Screen -->
+    <div class="intro-screen" id="intro-screen">
+        <div class="intro-card">
+            <h1 class="intro-title">JGS Advanced Code Project Builder 2025 v1.2</h1>
+            <p class="intro-description">
+                Create, organize and manage your code projects with ease. Our advanced tool helps you structure your projects 
+                professionally from the start, saving you time and effort in setup and configuration.
+            </p>
+            
+            <div class="intro-features">
+                <div class="intro-feature animate__animated animate__fadeInUp" style="animation-delay: 0.1s">
+                    <div class="intro-feature-icon">⚡</div>
+                    <h3 class="intro-feature-title">Quick Setup</h3>
+                    <p class="intro-feature-desc">Get started in seconds with pre-configured templates</p>
                 </div>
                 
-                <div class="form-group">
-                    <label>Select Template</label>
-                    <div class="format-selector">
-                        <div class="format-option" data-format="single-html">
-                            <div class="format-icon">📄</div>
-                            <div class="format-name">Single Page Code Project</div>
-                            <div class="format-desc">Including the code in a single HTML file - only a single index.html</div>
-                        </div>
-                        <div class="format-option" data-format="basic-web">
-                            <div class="format-icon">🌐</div>
-                            <div class="format-name">Single Web Project</div>
-                            <div class="format-desc">HTML + CSS + JS (index.html, style.css, script.js) no folders</div>
-                        </div>
-                        <div class="format-option" data-format="website">
-                            <div class="format-icon">🏗️</div>
-                            <div class="format-name">Website Project</div>
-                            <div class="format-desc">ncludes files and sub-folders
-                                Default folder structure and easy code file creation and editing</div>
-                        </div>
-                        <div class="format-option" data-format="advanced">
-                            <div class="format-icon">⚙️</div>
-                            <div class="format-name">Advanced Project (Full Control Mode)</div>
-                            <div class="format-desc">Full control and custom structure</div>
-                        </div>
-                    </div>
+                <div class="intro-feature animate__animated animate__fadeInUp" style="animation-delay: 0.2s">
+                    <div class="intro-feature-icon">🧩</div>
+                    <h3 class="intro-feature-title">Flexible Templates</h3>
+                    <p class="intro-feature-desc">Choose from multiple project structures</p>
+                </div>
+                
+                <div class="intro-feature animate__animated animate__fadeInUp" style="animation-delay: 0.3s">
+                    <div class="intro-feature-icon">📁</div>
+                    <h3 class="intro-feature-title">File Management</h3>
+                    <p class="intro-feature-desc">Easily add, edit and organize files</p>
                 </div>
             </div>
+            
+            <button class="intro-start-btn animate__animated animate__fadeInUp" id="intro-start-btn" style="animation-delay: 0.4s">
+                <span>🚀</span> Get Started
+            </button>
+        </div>
+    </div>
 
-            <!-- File Structure Panel -->
-            <div class="panel" id="file-structure-panel" style="display: none;">
-                <h2 class="panel-title">
-                    <span>🗂️</span>
-                    File structure
-                </h2>
-                
-                <div id="file-tree-container">
-                    <!-- Dynamic file tree will be inserted here -->
-                </div>
-                
-                <div class="form-group" id="advanced-controls" style="display: none; margin-top: 1rem;">
-                    <div style="display: flex; gap: 1rem;">
-                        <button class="btn btn-secondary" id="add-folder-btn">
-                            <span>📂</span> Add containers
-                        </button>
-                        <button class="btn btn-secondary" id="add-file-btn">
-                            <span>📄</span> Add New file
-                        </button>
-                    </div>
-                </div>
+    <!-- Project Name Setup Screen -->
+    <div class="setup-screen" id="project-name-screen">
+        <div class="setup-card">
+            <h2 class="setup-title">
+                <span class="setup-title-icon">✏️</span>
+                Name Your Project
+            </h2>
+            <p class="setup-description">
+                Enter a name for your new project. This will be used to name your project folder and main files.
+            </p>
+            
+            <div class="setup-form-group">
+                <label class="setup-label" for="setup-project-name">Project Name</label>
+                <input type="text" class="setup-input" id="setup-project-name" placeholder="මගේ වෙබ් අඩවිය">
             </div>
-
-            <!-- Actions Panel -->
-            <div class="panel">
-                <h2 class="panel-title">
-                    <span>🚀</span>
-                    Generate Project Setup
-                </h2>
-                
-                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <button class="btn btn-primary" id="generate-btn">
-                        <span>⚡</span> Generate the project
-                    </button>
-                    <button class="btn btn-outline" id="preview-btn" style="display: none;">
-                        <span>👁️</span> Preview
-                    </button>
-                    <button class="btn btn-outline" id="download-btn" style="display: none;">
-                        <span>📥</span> Download as ZIP
-                    </button>
-                    <button class="btn btn-outline" id="reset-btn">
-                        <span>🔄</span> Reset
-                    </button>
-                </div>
+            
+            <div class="setup-actions">
+                <button class="setup-btn setup-btn-secondary" id="project-name-back-btn">
+                    <span>←</span> Back
+                </button>
+                <button class="setup-btn setup-btn-primary" id="project-name-next-btn">
+                    Next <span>→</span>
+                </button>
             </div>
         </div>
+    </div>
 
-        <footer style="text-align: center; margin-top: 3rem; color: rgba(255, 255, 255, 0.5);">
-            <p>Powered by JGS Lanka Co. | JGS Lanka Software Development Group 2025©</p>
-        </footer>
+    <!-- Template Selection Screen -->
+    <div class="setup-screen" id="template-screen">
+        <div class="setup-card">
+            <h2 class="setup-title">
+                <span class="setup-title-icon">📋</span>
+                Choose a Template
+            </h2>
+            <p class="setup-description">
+                Select a template that matches your project type. You can customize the structure later.
+            </p>
+            
+            <div class="template-selector" id="template-selector">
+                <div class="template-option" data-format="single-html">
+                    <div class="template-icon">📄</div>
+                    <h3 class="template-name">Single Page Code Project</h3>
+                    <p class="template-desc">Including the code in a single HTML file - only a single index.html</p>
+                </div>
+                
+                <div class="template-option" data-format="basic-web">
+                    <div class="template-icon">🌐</div>
+                    <h3 class="template-name">Single Web Project</h3>
+                    <p class="template-desc">HTML + CSS + JS (index.html, style.css, script.js) no folders</p>
+                </div>
+                
+                <div class="template-option" data-format="website">
+                    <div class="template-icon">🏗️</div>
+                    <h3 class="template-name">Website Project</h3>
+                    <p class="template-desc">Includes files and sub-folders with default folder structure</p>
+                </div>
+                
+                <div class="template-option" data-format="advanced">
+                    <div class="template-icon">⚙️</div>
+                    <h3 class="template-name">Advanced Project</h3>
+                    <p class="template-desc">Full control and custom structure for complex projects</p>
+                </div>
+            </div>
+            
+            <div class="setup-actions">
+                <button class="setup-btn setup-btn-secondary" id="template-back-btn">
+                    <span>←</span> Back
+                </button>
+                <button class="setup-btn setup-btn-primary" id="template-next-btn">
+                    Create Project <span>→</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (shown after setup) -->
+    <div class="main-app" id="main-app">
+        <!-- Theme Toggle -->
+        <div class="theme-toggle">
+            <button class="theme-btn active" id="dark-theme-btn" title="Dark Mode">🌙</button>
+            <button class="theme-btn" id="light-theme-btn" title="Light Mode">☀️</button>
+        </div>
+
+        <div class="container">
+            <header>
+                <div class="logo">JGS Advanced Code Project Builder</div>
+                <div class="subtitle">Create and organize your code projects with ease</div>
+            </header>
+
+            <div class="app-container">
+                <!-- Project Setup Panel -->
+                <div class="panel">
+                    <h2 class="panel-title">
+                        <span>📁</span>
+                        Project Management
+                    </h2>
+                    
+                    <div class="form-group">
+                        <label for="project-name">Project Name</label>
+                        <input type="text" id="project-name" placeholder="මගේ වෙබ් අඩවිය">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Project Template</label>
+                        <input type="text" id="project-template" readonly>
+                    </div>
+                </div>
+
+                <!-- File Structure Panel -->
+                <div class="panel" id="file-structure-panel">
+                    <h2 class="panel-title">
+                        <span>🗂️</span>
+                        File structure
+                    </h2>
+                    
+                    <div id="file-tree-container">
+                        <!-- Dynamic file tree will be inserted here -->
+                    </div>
+                    
+                    <div class="form-group" id="advanced-controls" style="margin-top: 1rem;">
+                        <div style="display: flex; gap: 1rem;">
+                            <button class="btn btn-secondary" id="add-folder-btn">
+                                <span>📂</span> Add containers
+                            </button>
+                            <button class="btn btn-secondary" id="add-file-btn">
+                                <span>📄</span> Add New file
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions Panel -->
+                <div class="panel">
+                    <h2 class="panel-title">
+                        <span>🚀</span>
+                        Generate Project Setup
+                    </h2>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-primary" id="generate-btn">
+                            <span>⚡</span> Generate the project
+                        </button>
+                        <button class="btn btn-outline" id="preview-btn">
+                            <span>👁️</span> Preview
+                        </button>
+                        <button class="btn btn-outline" id="download-btn">
+                            <span>📥</span> Download as ZIP
+                        </button>
+                        <button class="btn btn-outline" id="reset-btn">
+                            <span>🔄</span> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <footer style="text-align: center; margin-top: 3rem; color: rgba(255, 255, 255, 0.5);">
+                <p>Powered by JGS Lanka Co. | JGS Lanka Software Development Group 2025©</p>
+            </footer>
+        </div>
     </div>
 
     <!-- Code Editor Modal -->
@@ -686,6 +1335,7 @@
             <div class="editor-body">
                 <div class="editor-line-numbers" id="line-numbers">1</div>
                 <textarea class="editor-textarea" id="code-textarea" spellcheck="false"></textarea>
+                <div class="editor-highlight" id="editor-highlight"></div>
             </div>
             <div class="editor-footer">
                 <button class="btn btn-outline" id="editor-cancel-btn">Cancel</button>
@@ -714,48 +1364,80 @@
     </div>
 
     <script>
-      // App State
-const state = {
-    projectName: 'my-project',
-    projectFormat: null,
-    files: {},
-    currentFile: null,
-    zip: null
-};
+        // App State
+        const state = {
+            projectName: 'my-project',
+            projectFormat: null,
+            files: {},
+            currentFile: null,
+            zip: null,
+            theme: 'dark'
+        };
 
-// DOM Elements
-const elements = {
-    projectNameInput: document.getElementById('project-name'),
-    formatOptions: document.querySelectorAll('.format-option'),
-    fileStructurePanel: document.getElementById('file-structure-panel'),
-    fileTreeContainer: document.getElementById('file-tree-container'),
-    advancedControls: document.getElementById('advanced-controls'),
-    addFolderBtn: document.getElementById('add-folder-btn'),
-    addFileBtn: document.getElementById('add-file-btn'),
-    generateBtn: document.getElementById('generate-btn'),
-    previewBtn: document.getElementById('preview-btn'),
-    downloadBtn: document.getElementById('download-btn'),
-    resetBtn: document.getElementById('reset-btn'),
-    codeEditor: document.getElementById('code-editor'),
-    editorCloseBtn: document.getElementById('editor-close-btn'),
-    editorCancelBtn: document.getElementById('editor-cancel-btn'),
-    editorSaveBtn: document.getElementById('editor-save-btn'),
-    editorFileIcon: document.getElementById('editor-file-icon'),
-    editorFileName: document.getElementById('editor-file-name'),
-    codeTextarea: document.getElementById('code-textarea'),
-    lineNumbers: document.getElementById('line-numbers'),
-    loadingScreen: document.getElementById('loading-screen'),
-    snackbar: document.getElementById('snackbar'),
-    snackbarIcon: document.getElementById('snackbar-icon'),
-    snackbarMessage: document.getElementById('snackbar-message'),
-    editorBody: document.querySelector('.editor-body')
-};
+        // DOM Elements
+        const elements = {
+            // Welcome and intro screens
+            welcomeScreen: document.getElementById('welcome-screen'),
+            welcomeProgress: document.getElementById('welcome-progress'),
+            introScreen: document.getElementById('intro-screen'),
+            introStartBtn: document.getElementById('intro-start-btn'),
+            
+            // Setup screens
+            projectNameScreen: document.getElementById('project-name-screen'),
+            projectNameInput: document.getElementById('setup-project-name'),
+            projectNameBackBtn: document.getElementById('project-name-back-btn'),
+            projectNameNextBtn: document.getElementById('project-name-next-btn'),
+            
+            templateScreen: document.getElementById('template-screen'),
+            templateOptions: document.querySelectorAll('.template-option'),
+            templateBackBtn: document.getElementById('template-back-btn'),
+            templateNextBtn: document.getElementById('template-next-btn'),
+            
+            // Main app
+            mainApp: document.getElementById('main-app'),
+            projectNameDisplay: document.getElementById('project-name'),
+            projectTemplateDisplay: document.getElementById('project-template'),
+            
+            // Theme toggle
+            darkThemeBtn: document.getElementById('dark-theme-btn'),
+            lightThemeBtn: document.getElementById('light-theme-btn'),
+            
+            // File structure
+            fileStructurePanel: document.getElementById('file-structure-panel'),
+            fileTreeContainer: document.getElementById('file-tree-container'),
+            advancedControls: document.getElementById('advanced-controls'),
+            addFolderBtn: document.getElementById('add-folder-btn'),
+            addFileBtn: document.getElementById('add-file-btn'),
+            
+            // Actions
+            generateBtn: document.getElementById('generate-btn'),
+            previewBtn: document.getElementById('preview-btn'),
+            downloadBtn: document.getElementById('download-btn'),
+            resetBtn: document.getElementById('reset-btn'),
+            
+            // Code editor
+            codeEditor: document.getElementById('code-editor'),
+            editorCloseBtn: document.getElementById('editor-close-btn'),
+            editorCancelBtn: document.getElementById('editor-cancel-btn'),
+            editorSaveBtn: document.getElementById('editor-save-btn'),
+            editorFileIcon: document.getElementById('editor-file-icon'),
+            editorFileName: document.getElementById('editor-file-name'),
+            codeTextarea: document.getElementById('code-textarea'),
+            lineNumbers: document.getElementById('line-numbers'),
+            editorHighlight: document.getElementById('editor-highlight'),
+            
+            // Loading and notifications
+            loadingScreen: document.getElementById('loading-screen'),
+            snackbar: document.getElementById('snackbar'),
+            snackbarIcon: document.getElementById('snackbar-icon'),
+            snackbarMessage: document.getElementById('snackbar-message')
+        };
 
-// File type configurations
-const fileTypes = {
-    'html': {
-        icon: '📄',
-        defaultContent: `<!DOCTYPE html>
+        // File type configurations
+        const fileTypes = {
+            'html': {
+                icon: '📄',
+                defaultContent: `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -768,10 +1450,10 @@ const fileTypes = {
    
 </body>
 </html>`
-    },
-    'css': {
-        icon: '🎨',
-        defaultContent: `body {
+            },
+            'css': {
+                icon: '🎨',
+                defaultContent: `body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -782,10 +1464,10 @@ const fileTypes = {
 h1 {
     color: #0066cc;
 }`
-    },
-    'js': {
-        icon: '📜',
-        defaultContent: `console.log('Hello from JavaScript!');
+            },
+            'js': {
+                icon: '📜',
+                defaultContent: `console.log('Hello from JavaScript!');
 
 function greet(name) {
     return \`Hello, \${name}!\`;
@@ -794,56 +1476,56 @@ function greet(name) {
 document.addEventListener('DOMContentLoaded', function() {
     // Your code here
 });`
-    },
-    'py': {
-        icon: '🐍',
-        defaultContent: `def main():
+            },
+            'py': {
+                icon: '🐍',
+                defaultContent: `def main():
     print("Hello from Python!")
 
 if __name__ == "__main__":
     main()`
-    },
-    'json': {
-        icon: '🔣',
-        defaultContent: `{
+            },
+            'json': {
+                icon: '🔣',
+                defaultContent: `{
     "name": "${state.projectName}",
     "version": "1.0.0",
     "description": "My project description",
     "main": "index.js"
 }`
-    },
-    'php': {
-        icon: '🐘',
-        defaultContent: `<?php
+            },
+            'php': {
+                icon: '🐘',
+                defaultContent: `<?php
 // Your PHP code here
 
 echo "Hello from PHP!";
 ?>`
-    },
-    'xml': {
-        icon: '📋',
-        defaultContent: `<?xml version="1.0" encoding="UTF-8"?>
+            },
+            'xml': {
+                icon: '📋',
+                defaultContent: `<?xml version="1.0" encoding="UTF-8"?>
 <root>
     <item id="1">
         <name>Item One</name>
     </item>
 </root>`
-    },
-    'md': {
-        icon: '📝',
-        defaultContent: `# ${state.projectName}
+            },
+            'md': {
+                icon: '📝',
+                defaultContent: `# ${state.projectName}
 
 ## Project Description
 
 This is a markdown file for your project documentation.`
-    },
-    'txt': {
-        icon: '📝',
-        defaultContent: 'This is a plain text file.'
-    },
-    'jsx': {
-        icon: '⚛️',
-        defaultContent: `import React from 'react';
+            },
+            'txt': {
+                icon: '📝',
+                defaultContent: 'This is a plain text file.'
+            },
+            'jsx': {
+                icon: '⚛️',
+                defaultContent: `import React from 'react';
 
 function App() {
     return (
@@ -854,10 +1536,10 @@ function App() {
 }
 
 export default App;`
-    },
-    'vue': {
-        icon: '🖖',
-        defaultContent: `<template>
+            },
+            'vue': {
+                icon: '🖖',
+                defaultContent: `<template>
     <div class="app">
         <h1>{{ message }}</h1>
     </div>
@@ -872,8 +1554,6 @@ export default {
     }
 };
 
-
-
 <style>
 .app {
     font-family: Avenir, Helvetica, Arial, sans-serif;
@@ -881,10 +1561,10 @@ export default {
     color: #2c3e50;
 }
 </style>`
-    },
-    'ts': {
-        icon: '📘',
-        defaultContent: `interface User {
+            },
+            'ts': {
+                icon: '📘',
+                defaultContent: `interface User {
     name: string;
     id: number;
 }
@@ -900,826 +1580,781 @@ class UserAccount {
 }
 
 const user: User = new UserAccount("Murphy", 1);`
-    },
-    'default': {
-        icon: '📄',
-        defaultContent: ''
-    }
-};
+            },
+            'default': {
+                icon: '📄',
+                defaultContent: ''
+            }
+        };
 
-// Initialize the app
-function init() {
-    // Set default project name
-    elements.projectNameInput.value = state.projectName;
-    
-    // Add style element for editor
-    const style = document.createElement('style');
-    style.textContent = getEditorStyles();
-    document.head.appendChild(style);
-    
-    // Event listeners
-    elements.projectNameInput.addEventListener('input', handleProjectNameChange);
-    elements.formatOptions.forEach(option => {
-        option.addEventListener('click', handleFormatSelect);
-    });
-    elements.addFolderBtn.addEventListener('click', handleAddFolder);
-    elements.addFileBtn.addEventListener('click', handleAddFile);
-    elements.generateBtn.addEventListener('click', handleGenerate);
-    elements.previewBtn.addEventListener('click', handlePreview);
-    elements.downloadBtn.addEventListener('click', handleDownload);
-    elements.resetBtn.addEventListener('click', handleReset);
-    elements.editorCloseBtn.addEventListener('click', closeEditor);
-    elements.editorCancelBtn.addEventListener('click', closeEditor);
-    elements.editorSaveBtn.addEventListener('click', saveFile);
-    elements.codeTextarea.addEventListener('input', function() {
-        updateLineNumbers();
-        updateCodeHighlight();
-    });
-    elements.codeTextarea.addEventListener('scroll', syncScroll);
-    
-    // Set initial state
-    updateUI();
-}
-
-// Get editor styles
-function getEditorStyles() {
-    return `
-        .editor-container {
-            width: 90%;
-            height: 90vh;
-            max-width: 1200px;
-        }
-        
-        .editor-body {
-            position: relative;
-        }
-        
-        .editor-textarea {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 1rem;
-            tab-size: 4;
-            color: transparent;
-            background: transparent;
-            caret-color: white;
-            resize: none;
-        }
-        
-        .editor-highlight {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            padding: 1rem;
-            font-family: 'Courier New', monospace;
-            font-size: 1rem;
-            line-height: 1.5;
-            white-space: pre;
-            overflow: auto;
-            pointer-events: none;
-            color: #f8f8f2;
-            background: #282a36;
-        }
-        
-        /* Syntax highlighting colors */
-        .token.comment,
-        .token.prolog,
-        .token.doctype,
-        .token.cdata {
-            color: #6272a4;
-        }
-        .token.punctuation {
-            color: #f8f8f2;
-        }
-        .token.property,
-        .token.tag,
-        .token.constant,
-        .token.symbol,
-        .token.deleted {
-            color: #ff79c6;
-        }
-        .token.boolean,
-        .token.number {
-            color: #bd93f9;
-        }
-        .token.selector,
-        .token.attr-name,
-        .token.string,
-        .token.char,
-        .token.builtin,
-        .token.inserted {
-            color: #50fa7b;
-        }
-        .token.operator,
-        .token.entity,
-        .token.url,
-        .language-css .token.string,
-        .style .token.string,
-        .token.variable {
-            color: #f8f8f2;
-        }
-        .token.atrule,
-        .token.attr-value,
-        .token.function,
-        .token.class-name {
-            color: #f1fa8c;
-        }
-        .token.keyword {
-            color: #8be9fd;
-        }
-        .token.regex,
-        .token.important {
-            color: #ffb86c;
-        }
-        .token.important,
-        .token.bold {
-            font-weight: bold;
-        }
-        .token.italic {
-            font-style: italic;
-        }
-        .token.entity {
-            cursor: help;
-        }
-    `;
-}
-
-// Create file format dropdown
-function createFileFormatDropdown() {
-    const formats = [
-        {name: 'HTML File', value: 'html'},
-        {name: 'JavaScript File', value: 'js'},
-        {name: 'CSS File', value: 'css'},
-        {name: 'Python File', value: 'py'},
-        {name: 'JSON File', value: 'json'},
-        {name: 'PHP File', value: 'php'},
-        {name: 'Markdown File', value: 'md'},
-        {name: 'Text File', value: 'txt'},
-        {name: 'React Component (JS)', value: 'jsx'},
-        {name: 'Vue Component', value: 'vue'},
-        {name: 'TypeScript File', value: 'ts'}
-    ];
-
-    let html = `<select id="file-format-select" class="format-select">`;
-    formats.forEach(format => {
-        html += `<option value="${format.value}">${format.name}</option>`;
-    });
-    html += `</select>`;
-    
-    return html;
-}
-
-// Handle project name change
-function handleProjectNameChange(e) {
-    state.projectName = e.target.value.trim() || 'my-project';
-}
-
-// Handle format selection
-function handleFormatSelect(e) {
-    const format = e.currentTarget.dataset.format;
-    state.projectFormat = format;
-    
-    // Update UI
-    elements.formatOptions.forEach(option => {
-        option.classList.toggle('selected', option.dataset.format === format);
-    });
-    
-    // Show file structure panel
-    elements.fileStructurePanel.style.display = 'block';
-    
-    // Initialize file structure based on format
-    initializeFileStructure();
-    
-    // Show advanced controls if advanced format
-    elements.advancedControls.style.display = format === 'advanced' ? 'block' : 'none';
-    
-    // Update UI
-    updateUI();
-}
-
-// Initialize file structure based on selected format
-function initializeFileStructure() {
-    state.files = {};
-    
-    switch (state.projectFormat) {
-        case 'single-html':
-            state.files['index.html'] = fileTypes['html'].defaultContent;
-            break;
+        // Initialize the app
+        function init() {
+            // Simulate loading progress
+            simulateWelcomeProgress();
             
-        case 'basic-web':
-            state.files['index.html'] = fileTypes['html'].defaultContent;
-            state.files['style.css'] = fileTypes['css'].defaultContent;
-            state.files['script.js'] = fileTypes['js'].defaultContent;
-            break;
+            // Event listeners for welcome and intro screens
+            elements.introStartBtn.addEventListener('click', showProjectNameScreen);
+            elements.projectNameBackBtn.addEventListener('click', showIntroScreen);
+            elements.projectNameNextBtn.addEventListener('click', showTemplateScreen);
+            elements.templateBackBtn.addEventListener('click', showProjectNameScreen);
+            elements.templateNextBtn.addEventListener('click', initializeMainApp);
             
-        case 'website':
-            state.files['index.html'] = fileTypes['html'].defaultContent;
-            state.files['style.css'] = fileTypes['css'].defaultContent;
-            state.files['script.js'] = fileTypes['js'].defaultContent;
-            state.files['assets'] = {
-                'images': {},
-                'fonts': {}
-            };
-            state.files['components'] = {
-                'navbar.html': `<!-- Navbar component -->\n<nav>\n    <ul>\n        <li><a href="/">Home</a></li>\n    </ul>\n</nav>`
-            };
-            break;
+            // Theme toggle
+            elements.darkThemeBtn.addEventListener('click', () => setTheme('dark'));
+            elements.lightThemeBtn.addEventListener('click', () => setTheme('light'));
             
-        case 'advanced':
-            state.files['index.html'] = fileTypes['html'].defaultContent;
-            break;
-    }
-    
-    renderFileTree();
-}
+            // Main app event listeners
+            elements.projectNameDisplay.addEventListener('input', handleProjectNameChange);
+            elements.addFolderBtn.addEventListener('click', handleAddFolder);
+            elements.addFileBtn.addEventListener('click', handleAddFile);
+            elements.generateBtn.addEventListener('click', handleGenerate);
+            elements.previewBtn.addEventListener('click', handlePreview);
+            elements.downloadBtn.addEventListener('click', handleDownload);
+            elements.resetBtn.addEventListener('click', handleReset);
+            elements.editorCloseBtn.addEventListener('click', closeEditor);
+            elements.editorCancelBtn.addEventListener('click', closeEditor);
+            elements.editorSaveBtn.addEventListener('click', saveFile);
+            elements.codeTextarea.addEventListener('input', function() {
+                updateLineNumbers();
+                updateCodeHighlight();
+            });
+            elements.codeTextarea.addEventListener('scroll', syncScroll);
+            
+            // Template selection
+            elements.templateOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    elements.templateOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    state.projectFormat = this.dataset.format;
+                });
+            });
+            
+            // Set initial theme
+            setTheme('dark');
+        }
 
-// Render file tree
-function renderFileTree() {
-    let html = '<div class="file-tree">';
-    
-    const renderFiles = (files, path = '') => {
-        for (const [name, content] of Object.entries(files)) {
-            const fullPath = path ? `${path}/${name}` : name;
-            
-            if (typeof content === 'object') {
-                // It's a folder
-                html += `
-                    <div class="folder">
-                        <div class="folder-header" data-path="${fullPath}">
-                            <span class="folder-icon">📁</span>
-                            <span class="folder-name">${name}</span>
-                            <div class="file-actions">
-                                <button class="action-btn" data-action="add-file" data-path="${fullPath}">+</button>
-                                <button class="action-btn" data-action="delete" data-path="${fullPath}">🗑️</button>
-                            </div>
-                        </div>
-                        <div class="folder-contents">
-                            ${renderFiles(content, fullPath)}
-                        </div>
-                    </div>
-                `;
-            } else {
-                // It's a file
-                const ext = name.split('.').pop().toLowerCase();
-                const fileIcon = fileTypes[ext]?.icon || '📄';
+        // Simulate welcome progress
+        function simulateWelcomeProgress() {
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 2;
+                elements.welcomeProgress.style.width = `${progress}%`;
                 
-                html += `
-                    <div class="file" data-path="${fullPath}">
-                        <span class="file-icon">${fileIcon}</span>
-                        <span class="file-name">${name}</span>
-                        <div class="file-actions">
-                            <button class="action-btn" data-action="edit" data-path="${fullPath}">✏️</button>
-                            <button class="action-btn" data-action="rename" data-path="${fullPath}">🏷️</button>
-                            <button class="action-btn" data-action="delete" data-path="${fullPath}">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            }
-        }
-        
-        return html;
-    };
-    
-    html = renderFiles(state.files);
-    html += '</div>';
-    
-    elements.fileTreeContainer.innerHTML = html;
-    
-    // Add event listeners to folder headers
-    document.querySelectorAll('.folder-header').forEach(header => {
-        header.addEventListener('click', (e) => {
-            if (e.target.classList.contains('action-btn')) return;
-            
-            const folderContents = header.nextElementSibling;
-            folderContents.classList.toggle('open');
-        });
-    });
-    
-    // Add event listeners to action buttons
-    document.querySelectorAll('.action-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const action = btn.dataset.action;
-            const path = btn.dataset.path;
-            
-            switch (action) {
-                case 'edit':
-                    editFile(path);
-                    break;
-                case 'rename':
-                    renameFile(path);
-                    break;
-                case 'delete':
-                    deleteFile(path);
-                    break;
-                case 'add-file':
-                    addFileToFolder(path);
-                    break;
-            }
-        });
-    });
-}
-
-// Handle add folder
-function handleAddFolder() {
-    const folderName = prompt('Enter the container name:');
-    if (folderName && folderName.trim()) {
-        state.files[folderName.trim()] = {};
-        renderFileTree();
-        showSnackbar('Containers added successfully!', 'success');
-    }
-}
-
-// Handle add file
-function handleAddFile() {
-    const container = document.createElement('div');
-    container.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <label for="new-file-name" style="display: block; margin-bottom: 5px;">File name:</label>
-            <input type="text" id="new-file-name" placeholder="script.js" style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label for="file-format-select" style="display: block; margin-bottom: 5px;">File type:</label>
-            ${createFileFormatDropdown()}
-        </div>
-    `;
-    
-    const result = confirmDialog({
-        title: 'Add new file',
-        content: container,
-        confirmText: 'Add',
-        cancelText: 'Cancel',
-        onConfirm: () => {
-            const fileName = document.getElementById('new-file-name').value.trim();
-            const format = document.getElementById('file-format-select').value;
-            
-            if (!fileName) {
-                alert('Enter file name');
-                return false;
-            }
-            
-            let finalFileName = fileName;
-            // Add extension if not provided
-            if (!fileName.includes('.')) {
-                finalFileName += `.${format}`;
-            }
-            
-            const ext = finalFileName.split('.').pop().toLowerCase();
-            const defaultContent = fileTypes[ext]?.defaultContent || fileTypes['default'].defaultContent;
-            state.files[finalFileName] = defaultContent;
-            renderFileTree();
-            showSnackbar('File added successfully!', 'success');
-            return true;
-        }
-    });
-}
-
-// Simple confirm dialog replacement (since we're not using external libraries)
-function confirmDialog(options) {
-    const wrapper = document.createElement('div');
-    wrapper.style.position = 'fixed';
-    wrapper.style.top = '0';
-    wrapper.style.left = '0';
-    wrapper.style.width = '100%';
-    wrapper.style.height = '100%';
-    wrapper.style.backgroundColor = 'rgba(0,0,0,0.5)';
-    wrapper.style.display = 'flex';
-    wrapper.style.justifyContent = 'center';
-    wrapper.style.alignItems = 'center';
-    wrapper.style.zIndex = '10000';
-    
-    const dialog = document.createElement('div');
-    dialog.style.backgroundColor = '#2d3436';
-    dialog.style.padding = '20px';
-    dialog.style.borderRadius = '10px';
-    dialog.style.maxWidth = '500px';
-    dialog.style.width = '90%';
-    
-    const title = document.createElement('h2');
-    title.textContent = options.title;
-    title.style.marginTop = '0';
-    title.style.color = '#6c5ce7';
-    dialog.appendChild(title);
-    
-    if (typeof options.content === 'string') {
-        dialog.innerHTML += options.content;
-    } else {
-        dialog.appendChild(options.content);
-    }
-    
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.justifyContent = 'flex-end';
-    buttonContainer.style.gap = '10px';
-    buttonContainer.style.marginTop = '20px';
-    
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = options.cancelText || 'Cancel';
-    cancelButton.style.padding = '8px 16px';
-    cancelButton.style.border = 'none';
-    cancelButton.style.borderRadius = '5px';
-    cancelButton.style.cursor = 'pointer';
-    cancelButton.addEventListener('click', () => {
-        document.body.removeChild(wrapper);
-    });
-    
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = options.confirmText || 'OK';
-    confirmButton.style.padding = '8px 16px';
-    confirmButton.style.backgroundColor = '#6c5ce7';
-    confirmButton.style.color = 'white';
-    confirmButton.style.border = 'none';
-    confirmButton.style.borderRadius = '5px';
-    confirmButton.style.cursor = 'pointer';
-    confirmButton.addEventListener('click', () => {
-        if (options.onConfirm && options.onConfirm() !== false) {
-            document.body.removeChild(wrapper);
-        }
-    });
-    
-    buttonContainer.appendChild(cancelButton);
-    buttonContainer.appendChild(confirmButton);
-    dialog.appendChild(buttonContainer);
-    wrapper.appendChild(dialog);
-    document.body.appendChild(wrapper);
-    
-    return {
-        then: (callback) => {
-            // Simple implementation for promise-like behavior
-            const originalConfirm = options.onConfirm;
-            options.onConfirm = function() {
-                const result = originalConfirm.apply(this, arguments);
-                if (result !== false) {
-                    callback({ value: true });
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        elements.welcomeScreen.classList.add('hidden');
+                        setTimeout(() => {
+                            showIntroScreen();
+                        }, 500);
+                    }, 300);
                 }
-                return result;
+            }, 50);
+        }
+
+        // Show intro screen
+        function showIntroScreen() {
+            elements.projectNameScreen.classList.remove('active');
+            elements.introScreen.classList.add('active');
+        }
+
+        // Show project name screen
+        function showProjectNameScreen() {
+            elements.introScreen.classList.remove('active');
+            elements.templateScreen.classList.remove('active');
+            elements.projectNameScreen.classList.add('active');
+            
+            // Set default project name
+            elements.projectNameInput.value = state.projectName;
+        }
+
+        // Show template screen
+        function showTemplateScreen() {
+            const projectName = elements.projectNameInput.value.trim();
+            if (!projectName) {
+                showSnackbar('Please enter a project name', 'error');
+                return;
+            }
+            
+            state.projectName = projectName;
+            elements.projectNameScreen.classList.remove('active');
+            elements.templateScreen.classList.add('active');
+            
+            // Reset template selection
+            elements.templateOptions.forEach(opt => opt.classList.remove('selected'));
+            state.projectFormat = null;
+        }
+
+        // Initialize main app after setup
+        function initializeMainApp() {
+            if (!state.projectFormat) {
+                showSnackbar('Please select a project template', 'error');
+                return;
+            }
+            
+            elements.templateScreen.classList.remove('active');
+            
+            // Update main app with project details
+            elements.projectNameDisplay.value = state.projectName;
+            elements.projectTemplateDisplay.value = document.querySelector('.template-option.selected .template-name').textContent;
+            
+            // Initialize file structure based on format
+            initializeFileStructure();
+            
+            // Show advanced controls if advanced format
+            elements.advancedControls.style.display = state.projectFormat === 'advanced' ? 'block' : 'none';
+            
+            // Show main app with animation
+            elements.mainApp.classList.add('active');
+            
+            showSnackbar('Project created successfully!', 'success');
+        }
+
+        // Set theme (dark/light)
+        function setTheme(theme) {
+            state.theme = theme;
+            document.body.className = theme === 'light' ? 'light-mode' : '';
+            
+            // Update theme buttons
+            elements.darkThemeBtn.classList.toggle('active', theme === 'dark');
+            elements.lightThemeBtn.classList.toggle('active', theme === 'light');
+        }
+
+        // Initialize file structure based on selected format
+        function initializeFileStructure() {
+            state.files = {};
+            
+            switch (state.projectFormat) {
+                case 'single-html':
+                    state.files['index.html'] = fileTypes['html'].defaultContent;
+                    break;
+                    
+                case 'basic-web':
+                    state.files['index.html'] = fileTypes['html'].defaultContent;
+                    state.files['style.css'] = fileTypes['css'].defaultContent;
+                    state.files['script.js'] = fileTypes['js'].defaultContent;
+                    break;
+                    
+                case 'website':
+                    state.files['index.html'] = fileTypes['html'].defaultContent;
+                    state.files['style.css'] = fileTypes['css'].defaultContent;
+                    state.files['script.js'] = fileTypes['js'].defaultContent;
+                    state.files['assets'] = {
+                        'images': {},
+                        'fonts': {}
+                    };
+                    state.files['components'] = {
+                        'navbar.html': `<!-- Navbar component -->\n<nav>\n    <ul>\n        <li><a href="/">Home</a></li>\n    </ul>\n</nav>`
+                    };
+                    break;
+                    
+                case 'advanced':
+                    state.files['index.html'] = fileTypes['html'].defaultContent;
+                    break;
+            }
+            
+            renderFileTree();
+        }
+
+        // Render file tree
+        function renderFileTree() {
+            let html = '<div class="file-tree">';
+            
+            const renderFiles = (files, path = '') => {
+                for (const [name, content] of Object.entries(files)) {
+                    const fullPath = path ? `${path}/${name}` : name;
+                    
+                    if (typeof content === 'object') {
+                        // It's a folder
+                        html += `
+                            <div class="folder">
+                                <div class="folder-header" data-path="${fullPath}">
+                                    <span class="folder-icon">📁</span>
+                                    <span class="folder-name">${name}</span>
+                                    <div class="file-actions">
+                                        <button class="action-btn" data-action="add-file" data-path="${fullPath}">+</button>
+                                        <button class="action-btn" data-action="delete" data-path="${fullPath}">🗑️</button>
+                                    </div>
+                                </div>
+                                <div class="folder-contents">
+                                    ${renderFiles(content, fullPath)}
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // It's a file
+                        const ext = name.split('.').pop().toLowerCase();
+                        const fileIcon = fileTypes[ext]?.icon || '📄';
+                        
+                        html += `
+                            <div class="file" data-path="${fullPath}">
+                                <span class="file-icon">${fileIcon}</span>
+                                <span class="file-name">${name}</span>
+                                <div class="file-actions">
+                                    <button class="action-btn" data-action="edit" data-path="${fullPath}">✏️</button>
+                                    <button class="action-btn" data-action="rename" data-path="${fullPath}">🏷️</button>
+                                    <button class="action-btn" data-action="delete" data-path="${fullPath}">🗑️</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+                
+                return html;
+            };
+            
+            html = renderFiles(state.files);
+            html += '</div>';
+            
+            elements.fileTreeContainer.innerHTML = html;
+            
+            // Add event listeners to folder headers
+            document.querySelectorAll('.folder-header').forEach(header => {
+                header.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('action-btn')) return;
+                    
+                    const folderContents = header.nextElementSibling;
+                    folderContents.classList.toggle('open');
+                });
+            });
+            
+            // Add event listeners to action buttons
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const action = btn.dataset.action;
+                    const path = btn.dataset.path;
+                    
+                    switch (action) {
+                        case 'edit':
+                            editFile(path);
+                            break;
+                        case 'rename':
+                            renameFile(path);
+                            break;
+                        case 'delete':
+                            deleteFile(path);
+                            break;
+                        case 'add-file':
+                            addFileToFolder(path);
+                            break;
+                    }
+                });
+            });
+        }
+
+        // Handle project name change
+        function handleProjectNameChange(e) {
+            state.projectName = e.target.value.trim() || 'my-project';
+        }
+
+        // Handle add folder
+        function handleAddFolder() {
+            const folderName = prompt('Enter the container name:');
+            if (folderName && folderName.trim()) {
+                state.files[folderName.trim()] = {};
+                renderFileTree();
+                showSnackbar('Containers added successfully!', 'success');
+            }
+        }
+
+        // Handle add file
+        function handleAddFile() {
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <label for="new-file-name" style="display: block; margin-bottom: 5px;">File name:</label>
+                    <input type="text" id="new-file-name" placeholder="script.js" style="width: 100%; padding: 8px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="file-format-select" style="display: block; margin-bottom: 5px;">File type:</label>
+                    ${createFileFormatDropdown()}
+                </div>
+            `;
+            
+            const result = confirmDialog({
+                title: 'Add new file',
+                content: container,
+                confirmText: 'Add',
+                cancelText: 'Cancel',
+                onConfirm: () => {
+                    const fileName = document.getElementById('new-file-name').value.trim();
+                    const format = document.getElementById('file-format-select').value;
+                    
+                    if (!fileName) {
+                        alert('Enter file name');
+                        return false;
+                    }
+                    
+                    let finalFileName = fileName;
+                    // Add extension if not provided
+                    if (!fileName.includes('.')) {
+                        finalFileName += `.${format}`;
+                    }
+                    
+                    const ext = finalFileName.split('.').pop().toLowerCase();
+                    const defaultContent = fileTypes[ext]?.defaultContent || fileTypes['default'].defaultContent;
+                    state.files[finalFileName] = defaultContent;
+                    renderFileTree();
+                    showSnackbar('File added successfully!', 'success');
+                    return true;
+                }
+            });
+        }
+
+        // Create file format dropdown
+        function createFileFormatDropdown() {
+            const formats = [
+                {name: 'HTML File', value: 'html'},
+                {name: 'JavaScript File', value: 'js'},
+                {name: 'CSS File', value: 'css'},
+                {name: 'Python File', value: 'py'},
+                {name: 'JSON File', value: 'json'},
+                {name: 'PHP File', value: 'php'},
+                {name: 'Markdown File', value: 'md'},
+                {name: 'Text File', value: 'txt'},
+                {name: 'React Component (JS)', value: 'jsx'},
+                {name: 'Vue Component', value: 'vue'},
+                {name: 'TypeScript File', value: 'ts'}
+            ];
+
+            let html = `<select id="file-format-select" class="format-select">`;
+            formats.forEach(format => {
+                html += `<option value="${format.value}">${format.name}</option>`;
+            });
+            html += `</select>`;
+            
+            return html;
+        }
+
+        // Simple confirm dialog replacement
+        function confirmDialog(options) {
+            const wrapper = document.createElement('div');
+            wrapper.style.position = 'fixed';
+            wrapper.style.top = '0';
+            wrapper.style.left = '0';
+            wrapper.style.width = '100%';
+            wrapper.style.height = '100%';
+            wrapper.style.backgroundColor = 'rgba(0,0,0,0.5)';
+            wrapper.style.display = 'flex';
+            wrapper.style.justifyContent = 'center';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.zIndex = '10000';
+            
+            const dialog = document.createElement('div');
+            dialog.style.backgroundColor = '#2d3436';
+            dialog.style.padding = '20px';
+            dialog.style.borderRadius = '10px';
+            dialog.style.maxWidth = '500px';
+            dialog.style.width = '90%';
+            
+            const title = document.createElement('h2');
+            title.textContent = options.title;
+            title.style.marginTop = '0';
+            title.style.color = '#6c5ce7';
+            dialog.appendChild(title);
+            
+            if (typeof options.content === 'string') {
+                dialog.innerHTML += options.content;
+            } else {
+                dialog.appendChild(options.content);
+            }
+            
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.display = 'flex';
+            buttonContainer.style.justifyContent = 'flex-end';
+            buttonContainer.style.gap = '10px';
+            buttonContainer.style.marginTop = '20px';
+            
+            const cancelButton = document.createElement('button');
+            cancelButton.textContent = options.cancelText || 'Cancel';
+            cancelButton.style.padding = '8px 16px';
+            cancelButton.style.border = 'none';
+            cancelButton.style.borderRadius = '5px';
+            cancelButton.style.cursor = 'pointer';
+            cancelButton.addEventListener('click', () => {
+                document.body.removeChild(wrapper);
+            });
+            
+            const confirmButton = document.createElement('button');
+            confirmButton.textContent = options.confirmText || 'OK';
+            confirmButton.style.padding = '8px 16px';
+            confirmButton.style.backgroundColor = '#6c5ce7';
+            confirmButton.style.color = 'white';
+            confirmButton.style.border = 'none';
+            confirmButton.style.borderRadius = '5px';
+            confirmButton.style.cursor = 'pointer';
+            confirmButton.addEventListener('click', () => {
+                if (options.onConfirm && options.onConfirm() !== false) {
+                    document.body.removeChild(wrapper);
+                }
+            });
+            
+            buttonContainer.appendChild(cancelButton);
+            buttonContainer.appendChild(confirmButton);
+            dialog.appendChild(buttonContainer);
+            wrapper.appendChild(dialog);
+            document.body.appendChild(wrapper);
+            
+            return {
+                then: (callback) => {
+                    // Simple implementation for promise-like behavior
+                    const originalConfirm = options.onConfirm;
+                    options.onConfirm = function() {
+                        const result = originalConfirm.apply(this, arguments);
+                        if (result !== false) {
+                            callback({ value: true });
+                        }
+                        return result;
+                    };
+                }
             };
         }
-    };
-}
 
-// Add file to specific folder
-function addFileToFolder(folderPath) {
-    const container = document.createElement('div');
-    container.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <label for="new-file-name" style="display: block; margin-bottom: 5px;">File name:</label>
-            <input type="text" id="new-file-name" placeholder="component.js" style="width: 100%; padding: 8px;">
-        </div>
-        <div style="margin-bottom: 10px;">
-            <label for="file-format-select" style="display: block; margin-bottom: 5px;">File type:</label>
-            ${createFileFormatDropdown()}
-        </div>
-    `;
-    
-    const result = confirmDialog({
-        title: 'Add new file',
-        content: container,
-        confirmText: 'Add',
-        cancelText: 'Cancel',
-        onConfirm: () => {
-            const fileName = document.getElementById('new-file-name').value.trim();
-            const format = document.getElementById('file-format-select').value;
+        // Add file to specific folder
+        function addFileToFolder(folderPath) {
+            const container = document.createElement('div');
+            container.innerHTML = `
+                <div style="margin-bottom: 10px;">
+                    <label for="new-file-name" style="display: block; margin-bottom: 5px;">File name:</label>
+                    <input type="text" id="new-file-name" placeholder="component.js" style="width: 100%; padding: 8px;">
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <label for="file-format-select" style="display: block; margin-bottom: 5px;">File type:</label>
+                    ${createFileFormatDropdown()}
+                </div>
+            `;
             
-            if (!fileName) {
-                alert('Enter file name.');
-                return false;
+            const result = confirmDialog({
+                title: 'Add new file',
+                content: container,
+                confirmText: 'Add',
+                cancelText: 'Cancel',
+                onConfirm: () => {
+                    const fileName = document.getElementById('new-file-name').value.trim();
+                    const format = document.getElementById('file-format-select').value;
+                    
+                    if (!fileName) {
+                        alert('Enter file name.');
+                        return false;
+                    }
+                    
+                    let finalFileName = fileName;
+                    // Add extension if not provided
+                    if (!fileName.includes('.')) {
+                        finalFileName += `.${format}`;
+                    }
+                    
+                    const pathParts = folderPath.split('/');
+                    let currentLevel = state.files;
+                    
+                    for (const part of pathParts) {
+                        currentLevel = currentLevel[part];
+                    }
+                    
+                    const ext = finalFileName.split('.').pop().toLowerCase();
+                    const defaultContent = fileTypes[ext]?.defaultContent || fileTypes['default'].defaultContent;
+                    currentLevel[finalFileName] = defaultContent;
+                    
+                    renderFileTree();
+                    showSnackbar('File added successfully!', 'success');
+                    return true;
+                }
+            });
+        }
+
+        // Edit file
+        function editFile(path) {
+            const content = getFileContent(path);
+            if (content === undefined) return;
+            
+            state.currentFile = path;
+            const fileName = path.split('/').pop();
+            const ext = fileName.split('.').pop().toLowerCase();
+            const fileIcon = fileTypes[ext]?.icon || '📄';
+            
+            elements.editorFileIcon.textContent = fileIcon;
+            elements.editorFileName.textContent = fileName;
+            elements.codeTextarea.value = content;
+            
+            updateCodeHighlight();
+            updateLineNumbers();
+            
+            openEditor();
+        }
+
+        // Update code highlighting
+        function updateCodeHighlight() {
+            const code = elements.codeTextarea.value;
+            const fileName = elements.editorFileName.textContent;
+            const ext = fileName.split('.').pop().toLowerCase();
+            
+            // Simple syntax highlighting
+            let highlightedCode = code;
+            
+            // Basic highlighting for different file types
+            switch(ext) {
+                case 'html':
+                    highlightedCode = highlightHTML(code);
+                    break;
+                case 'css':
+                    highlightedCode = highlightCSS(code);
+                    break;
+                case 'js':
+                case 'jsx':
+                    highlightedCode = highlightJS(code);
+                    break;
+                case 'py':
+                    highlightedCode = highlightPython(code);
+                    break;
+                default:
+                    highlightedCode = escapeHtml(code);
             }
             
-            let finalFileName = fileName;
-            // Add extension if not provided
-            if (!fileName.includes('.')) {
-                finalFileName += `.${format}`;
+            elements.editorHighlight.innerHTML = highlightedCode;
+            syncScroll();
+        }
+
+        // Basic syntax highlighting functions
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;")
+                       .replace(/</g, "&lt;")
+                       .replace(/>/g, "&gt;")
+                       .replace(/"/g, "&quot;")
+                       .replace(/'/g, "&#039;");
+        }
+
+        function highlightHTML(code) {
+            // Simple HTML highlighting
+            return escapeHtml(code)
+                .replace(/&lt;!--[\s\S]*?--&gt;/g, '<span class="token comment">&lt;!--$&--&gt;</span>')
+                .replace(/&lt;\/?[\w:-]+/g, '<span class="token tag">$&</span>')
+                .replace(/&gt;/g, '<span class="token tag">$&</span>')
+                .replace(/"[\w\W]*?"/g, '<span class="token attr-value">$&</span>')
+                .replace(/&lt;![\w\W]*?&gt;/g, '<span class="token doctype">$&</span>');
+        }
+
+        function highlightCSS(code) {
+            // Simple CSS highlighting
+            return escapeHtml(code)
+                .replace(/\/\*[\s\S]*?\*\//g, '<span class="token comment">$&</span>')
+                .replace(/([\w-]+)\s*:/g, '<span class="token property">$1</span>:')
+                .replace(/:[ \t]*([^;}]+)/g, ': <span class="token value">$1</span>')
+                .replace(/#[a-fA-F0-9]{3,6}/g, '<span class="token hexcode">$&</span>');
+        }
+
+        function highlightJS(code) {
+            // Simple JavaScript highlighting
+            const keywords = ['function', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 
+                             'return', 'class', 'import', 'export', 'try', 'catch', 'finally'];
+            
+            let highlighted = escapeHtml(code)
+                .replace(/\/\/.*$/gm, '<span class="token comment">$&</span>')
+                .replace(/\/\*[\s\S]*?\*\//g, '<span class="token comment">$&</span>');
+            
+            keywords.forEach(kw => {
+                const regex = new RegExp(`\\b${kw}\\b`, 'g');
+                highlighted = highlighted.replace(regex, `<span class="token keyword">${kw}</span>`);
+            });
+            
+            highlighted = highlighted
+                .replace(/("|')(.*?)\1/g, '<span class="token string">$&</span>')
+                .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>');
+            
+            return highlighted;
+        }
+
+        function highlightPython(code) {
+            // Simple Python highlighting
+            const keywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 
+                             'try', 'except', 'finally', 'import', 'from', 'as', 
+                             'return', 'yield', 'lambda', 'with'];
+            
+            let highlighted = escapeHtml(code)
+                .replace(/#.*$/gm, '<span class="token comment">$&</span>')
+                .replace(/""".*?"""/gs, '<span class="token comment">$&</span>')
+                .replace(/'''.*?'''/gs, '<span class="token comment">$&</span>');
+            
+            keywords.forEach(kw => {
+                const regex = new RegExp(`\\b${kw}\\b`, 'g');
+                highlighted = highlighted.replace(regex, `<span class="token keyword">${kw}</span>`);
+            });
+            
+            highlighted = highlighted
+                .replace(/("|')(.*?)\1/g, '<span class="token string">$&</span>')
+                .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>')
+                .replace(/\b(True|False|None)\b/g, '<span class="token constant">$1</span>');
+            
+            return highlighted;
+        }
+
+        // Rename file
+        function renameFile(path) {
+            const newName = prompt('Enter new name:', path.split('/').pop());
+            if (!newName || !newName.trim()) return;
+            
+            const pathParts = path.split('/');
+            const oldName = pathParts.pop();
+            
+            if (pathParts.length === 0) {
+                // Root level file
+                if (state.files[newName.trim()]) {
+                    showSnackbar('A file with this name already exists !', 'error');
+                    return;
+                }
+                
+                state.files[newName.trim()] = state.files[oldName];
+                delete state.files[oldName];
+            } else {
+                // Nested file
+                let currentLevel = state.files;
+                
+                for (const part of pathParts) {
+                    currentLevel = currentLevel[part];
+                }
+                
+                if (currentLevel[newName.trim()]) {
+                    showSnackbar('A file with this name already exists !', 'error');
+                    return;
+                }
+                
+                currentLevel[newName.trim()] = currentLevel[oldName];
+                delete currentLevel[oldName];
             }
             
-            const pathParts = folderPath.split('/');
+            renderFileTree();
+            showSnackbar('File renamed successfully!', 'success');
+        }
+
+        // Delete file
+        function deleteFile(path) {
+            if (!confirm('Do you want to delete this file/container?')) return;
+            
+            const pathParts = path.split('/');
+            
+            if (pathParts.length === 1) {
+                // Root level file/folder
+                delete state.files[pathParts[0]];
+            } else {
+                // Nested file/folder
+                let currentLevel = state.files;
+                
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    currentLevel = currentLevel[pathParts[i]];
+                }
+                
+                delete currentLevel[pathParts[pathParts.length - 1]];
+            }
+            
+            renderFileTree();
+            showSnackbar('File/container deleted successfully!', 'success');
+        }
+
+        // Get file content by path
+        function getFileContent(path) {
+            const pathParts = path.split('/');
             let currentLevel = state.files;
             
-            for (const part of pathParts) {
-                currentLevel = currentLevel[part];
+            for (let i = 0; i < pathParts.length - 1; i++) {
+                currentLevel = currentLevel[pathParts[i]];
+                if (!currentLevel) return undefined;
             }
             
-            const ext = finalFileName.split('.').pop().toLowerCase();
-            const defaultContent = fileTypes[ext]?.defaultContent || fileTypes['default'].defaultContent;
-            currentLevel[finalFileName] = defaultContent;
+            return currentLevel[pathParts[pathParts.length - 1]];
+        }
+
+        // Set file content by path
+        function setFileContent(path, content) {
+            const pathParts = path.split('/');
+            let currentLevel = state.files;
             
-            renderFileTree();
-            showSnackbar('File added successfully!', 'success');
-            return true;
-        }
-    });
-}
-
-// Edit file
-function editFile(path) {
-    const content = getFileContent(path);
-    if (content === undefined) return;
-    
-    state.currentFile = path;
-    const fileName = path.split('/').pop();
-    const ext = fileName.split('.').pop().toLowerCase();
-    const fileIcon = fileTypes[ext]?.icon || '📄';
-    
-    elements.editorFileIcon.textContent = fileIcon;
-    elements.editorFileName.textContent = fileName;
-    
-    // Create highlight div if not exists
-    if (!document.getElementById('editor-highlight')) {
-        const highlightDiv = document.createElement('div');
-        highlightDiv.id = 'editor-highlight';
-        highlightDiv.className = 'editor-highlight';
-        elements.editorBody.appendChild(highlightDiv);
-    }
-    
-    elements.codeTextarea.value = content;
-    updateCodeHighlight();
-    updateLineNumbers();
-    
-    openEditor();
-}
-
-// Update code highlighting
-function updateCodeHighlight() {
-    const highlightDiv = document.getElementById('editor-highlight');
-    if (!highlightDiv) return;
-    
-    const code = elements.codeTextarea.value;
-    const fileName = elements.editorFileName.textContent;
-    const ext = fileName.split('.').pop().toLowerCase();
-    
-    // Simple syntax highlighting
-    let highlightedCode = code;
-    
-    // Basic highlighting for different file types
-    switch(ext) {
-        case 'html':
-            highlightedCode = highlightHTML(code);
-            break;
-        case 'css':
-            highlightedCode = highlightCSS(code);
-            break;
-        case 'js':
-        case 'jsx':
-            highlightedCode = highlightJS(code);
-            break;
-        case 'py':
-            highlightedCode = highlightPython(code);
-            break;
-        default:
-            highlightedCode = escapeHtml(code);
-    }
-    
-    highlightDiv.innerHTML = highlightedCode;
-    syncScroll();
-}
-
-// Basic syntax highlighting functions
-function escapeHtml(text) {
-    return text.replace(/&/g, "&amp;")
-               .replace(/</g, "&lt;")
-               .replace(/>/g, "&gt;")
-               .replace(/"/g, "&quot;")
-               .replace(/'/g, "&#039;");
-}
-
-function highlightHTML(code) {
-    // Simple HTML highlighting
-    return escapeHtml(code)
-        .replace(/&lt;!--[\s\S]*?--&gt;/g, '<span class="token comment">&lt;!--$&--&gt;</span>')
-        .replace(/&lt;\/?[\w:-]+/g, '<span class="token tag">$&</span>')
-        .replace(/&gt;/g, '<span class="token tag">$&</span>')
-        .replace(/"[\w\W]*?"/g, '<span class="token attr-value">$&</span>')
-        .replace(/&lt;![\w\W]*?&gt;/g, '<span class="token doctype">$&</span>');
-}
-
-function highlightCSS(code) {
-    // Simple CSS highlighting
-    return escapeHtml(code)
-        .replace(/\/\*[\s\S]*?\*\//g, '<span class="token comment">$&</span>')
-        .replace(/([\w-]+)\s*:/g, '<span class="token property">$1</span>:')
-        .replace(/:[ \t]*([^;}]+)/g, ': <span class="token value">$1</span>')
-        .replace(/#[a-fA-F0-9]{3,6}/g, '<span class="token hexcode">$&</span>');
-}
-
-function highlightJS(code) {
-    // Simple JavaScript highlighting
-    const keywords = ['function', 'var', 'let', 'const', 'if', 'else', 'for', 'while', 
-                     'return', 'class', 'import', 'export', 'try', 'catch', 'finally'];
-    
-    let highlighted = escapeHtml(code)
-        .replace(/\/\/.*$/gm, '<span class="token comment">$&</span>')
-        .replace(/\/\*[\s\S]*?\*\//g, '<span class="token comment">$&</span>');
-    
-    keywords.forEach(kw => {
-        const regex = new RegExp(`\\b${kw}\\b`, 'g');
-        highlighted = highlighted.replace(regex, `<span class="token keyword">${kw}</span>`);
-    });
-    
-    highlighted = highlighted
-        .replace(/("|')(.*?)\1/g, '<span class="token string">$&</span>')
-        .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>');
-    
-    return highlighted;
-}
-
-function highlightPython(code) {
-    // Simple Python highlighting
-    const keywords = ['def', 'class', 'if', 'elif', 'else', 'for', 'while', 
-                     'try', 'except', 'finally', 'import', 'from', 'as', 
-                     'return', 'yield', 'lambda', 'with'];
-    
-    let highlighted = escapeHtml(code)
-        .replace(/#.*$/gm, '<span class="token comment">$&</span>')
-        .replace(/""".*?"""/gs, '<span class="token comment">$&</span>')
-        .replace(/'''.*?'''/gs, '<span class="token comment">$&</span>');
-    
-    keywords.forEach(kw => {
-        const regex = new RegExp(`\\b${kw}\\b`, 'g');
-        highlighted = highlighted.replace(regex, `<span class="token keyword">${kw}</span>`);
-    });
-    
-    highlighted = highlighted
-        .replace(/("|')(.*?)\1/g, '<span class="token string">$&</span>')
-        .replace(/\b(\d+)\b/g, '<span class="token number">$1</span>')
-        .replace(/\b(True|False|None)\b/g, '<span class="token constant">$1</span>');
-    
-    return highlighted;
-}
-
-// Rename file
-function renameFile(path) {
-    const newName = prompt('Enter new name:', path.split('/').pop());
-    if (!newName || !newName.trim()) return;
-    
-    const pathParts = path.split('/');
-    const oldName = pathParts.pop();
-    
-    if (pathParts.length === 0) {
-        // Root level file
-        if (state.files[newName.trim()]) {
-            showSnackbar('A file with this name already exists !', 'error');
-            return;
-        }
-        
-        state.files[newName.trim()] = state.files[oldName];
-        delete state.files[oldName];
-    } else {
-        // Nested file
-        let currentLevel = state.files;
-        
-        for (const part of pathParts) {
-            currentLevel = currentLevel[part];
-        }
-        
-        if (currentLevel[newName.trim()]) {
-            showSnackbar('A file with this name already exists !', 'error');
-            return;
-        }
-        
-        currentLevel[newName.trim()] = currentLevel[oldName];
-        delete currentLevel[oldName];
-    }
-    
-    renderFileTree();
-    showSnackbar('File renamed successfully!', 'success');
-}
-
-// Delete file
-function deleteFile(path) {
-    if (!confirm('Do you want to delete this file/container?')) return;
-    
-    const pathParts = path.split('/');
-    
-    if (pathParts.length === 1) {
-        // Root level file/folder
-        delete state.files[pathParts[0]];
-    } else {
-        // Nested file/folder
-        let currentLevel = state.files;
-        
-        for (let i = 0; i < pathParts.length - 1; i++) {
-            currentLevel = currentLevel[pathParts[i]];
-        }
-        
-        delete currentLevel[pathParts[pathParts.length - 1]];
-    }
-    
-    renderFileTree();
-    showSnackbar('File/container deleted successfully!', 'success');
-}
-
-// Get file content by path
-function getFileContent(path) {
-    const pathParts = path.split('/');
-    let currentLevel = state.files;
-    
-    for (let i = 0; i < pathParts.length - 1; i++) {
-        currentLevel = currentLevel[pathParts[i]];
-        if (!currentLevel) return undefined;
-    }
-    
-    return currentLevel[pathParts[pathParts.length - 1]];
-}
-
-// Set file content by path
-function setFileContent(path, content) {
-    const pathParts = path.split('/');
-    let currentLevel = state.files;
-    
-    for (let i = 0; i < pathParts.length - 1; i++) {
-        currentLevel = currentLevel[pathParts[i]];
-    }
-    
-    currentLevel[pathParts[pathParts.length - 1]] = content;
-}
-
-// Open code editor
-function openEditor() {
-    elements.codeEditor.classList.add('open');
-    elements.codeTextarea.focus();
-}
-
-// Close code editor
-function closeEditor() {
-    elements.codeEditor.classList.remove('open');
-}
-
-// Save file from editor
-function saveFile() {
-    if (!state.currentFile) return;
-    
-    setFileContent(state.currentFile, elements.codeTextarea.value);
-    closeEditor();
-    showSnackbar('File saved successfully!', 'success');
-}
-
-// Update line numbers in editor
-function updateLineNumbers() {
-    const lines = elements.codeTextarea.value.split('\n').length;
-    let numbers = '';
-    
-    for (let i = 1; i <= lines; i++) {
-        numbers += `${i}\n`;
-    }
-    
-    elements.lineNumbers.textContent = numbers;
-}
-
-// Sync scroll between textarea and line numbers/highlight
-function syncScroll() {
-    const highlightDiv = document.getElementById('editor-highlight');
-    if (highlightDiv) {
-        highlightDiv.scrollTop = elements.codeTextarea.scrollTop;
-        highlightDiv.scrollLeft = elements.codeTextarea.scrollLeft;
-    }
-    elements.lineNumbers.scrollTop = elements.codeTextarea.scrollTop;
-}
-
-// Handle generate project
-function handleGenerate() {
-    if (!state.projectFormat) {
-        showSnackbar('Please select a project format!', 'error');
-        return;
-    }
-    
-    // Show loading screen
-    elements.loadingScreen.classList.add('active');
-    
-    // Generate ZIP after a delay (for animation)
-    setTimeout(() => {
-        generateZip().then(() => {
-            // Hide loading screen
-            elements.loadingScreen.classList.remove('active');
+            for (let i = 0; i < pathParts.length - 1; i++) {
+                currentLevel = currentLevel[pathParts[i]];
+            }
             
-            // Show download button
-            elements.downloadBtn.style.display = 'inline-flex';
-            elements.previewBtn.style.display = 'inline-flex';
-            
-            showSnackbar('The project was successfully generated!', 'success');
-        });
-    }, 1500);
-}
+            currentLevel[pathParts[pathParts.length - 1]] = content;
+        }
 
-// Generate ZIP file
-async function generateZip() {
-    const zip = new JSZip();
-    
-    // Add files to zip
-    const addFilesToZip = (files, path = '') => {
-        for (const [name, content] of Object.entries(files)) {
-            const fullPath = path ? `${path}/${name}` : name;
+        // Open code editor
+        function openEditor() {
+            elements.codeEditor.classList.add('open');
+            elements.codeTextarea.focus();
+        }
+
+        // Close code editor
+        function closeEditor() {
+            elements.codeEditor.classList.remove('open');
+        }
+
+        // Save file from editor
+        function saveFile() {
+            if (!state.currentFile) return;
             
-            if (typeof content === 'object') {
-                // It's a folder
-                const folder = path ? zip.folder(path).folder(name) : zip.folder(name);
-                addFilesToZip(content, fullPath);
-            } else {
-                // It's a file
-                if (path) {
+            setFileContent(state.currentFile, elements.codeTextarea.value);
+            closeEditor();
+            showSnackbar('File saved successfully!', 'success');
+        }
+
+        // Update line numbers in editor
+        function updateLineNumbers() {
+            const lines = elements.codeTextarea.value.split('\n').length;
+            let numbers = '';
+            
+            for (let i = 1; i <= lines; i++) {
+                numbers += `${i}\n`;
+            }
+            
+            elements.lineNumbers.textContent = numbers;
+        }
+
+        // Sync scroll between textarea and line numbers/highlight
+        function syncScroll() {
+            elements.editorHighlight.scrollTop = elements.codeTextarea.scrollTop;
+            elements.editorHighlight.scrollLeft = elements.codeTextarea.scrollLeft;
+            elements.lineNumbers.scrollTop = elements.codeTextarea.scrollTop;
+        }
+
+        // Handle generate project
+        function handleGenerate() {
+            if (!state.projectFormat) {
+                showSnackbar('Please select a project format!', 'error');
+                return;
+            }
+            
+            // Show loading screen
+            elements.loadingScreen.classList.add('active');
+            
+            // Generate ZIP after a delay (for animation)
+            setTimeout(() => {
+                generateZip().then(() => {
+                    // Hide loading screen
+                    elements.loadingScreen.classList.remove('active');
+                    
+                    // Show download button
+                    elements.downloadBtn.style.display = 'inline-flex';
+                    elements.previewBtn.style.display = 'inline-flex';
+                    
+                    showSnackbar('The project was successfully generated!', 'success');
+                });
+            }, 1500);
+        }
+
+        // Generate ZIP file
+        async function generateZip() {
+            const zip = new JSZip();
+            
+            // Add files to zip
+            const addFilesToZip = (files, path = '') => {
+                for (const [name, content] of Object.entries(files)) {
+                    const fullPath = path ? `${path}/${name}` : name;
+                    
+                    if (typeof content === 'object') {
+                        // It's a folder
+                        const folder = path ? zip.folder(path).folder(name) : zip.folder(name);
+                        addFilesToZip(content, fullPath);
+                    } else {
+                        // It's a file
+                        if (path) {
                             const folder = zip.folder(path);
                             folder.file(name, content);
                         } else {
@@ -1735,8 +2370,8 @@ async function generateZip() {
             state.zip = await zip.generateAsync({ type: 'blob' });
         }
 
-          // Handle preview
-          function handlePreview() {
+        // Handle preview
+        function handlePreview() {
             if (!state.zip) return;
             
             // In a real implementation, you would extract and preview index.html
@@ -1761,15 +2396,12 @@ async function generateZip() {
                 state.currentFile = null;
                 state.zip = null;
                 
-                elements.projectNameInput.value = state.projectName;
-                elements.formatOptions.forEach(option => {
-                    option.classList.remove('selected');
-                });
+                elements.projectNameDisplay.value = state.projectName;
+                elements.projectTemplateDisplay.value = '';
                 
-                elements.fileStructurePanel.style.display = 'none';
-                elements.advancedControls.style.display = 'none';
-                elements.downloadBtn.style.display = 'none';
-                elements.previewBtn.style.display = 'none';
+                // Hide main app and show intro screen
+                elements.mainApp.classList.remove('active');
+                showIntroScreen();
                 
                 showSnackbar('The project was reset.!', 'success');
             }
@@ -1789,12 +2421,6 @@ async function generateZip() {
             setTimeout(() => {
                 elements.snackbar.classList.remove('show');
             }, 3000);
-        }
-
-        // Update UI based on state
-        function updateUI() {
-            // Update buttons based on state
-            elements.generateBtn.disabled = !state.projectFormat;
         }
 
         // Initialize the app when DOM is loaded
